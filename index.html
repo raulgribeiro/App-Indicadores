@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Indicadores — Agrícola e Indústria</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+:root{
+  --bg:#0f1720; --bg2:#131c26; --card:#17212b; --card2:#1c2733; --accent:#f7c948; --accent2:#0984e3;
+  --danger:#e74c3c; --warn:#f39c12; --success:#00b894; --text:#e8edf2; --muted:#8fa1b3; --border:#25333f;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,var(--bg),var(--bg2));color:var(--text);}
+header{padding:22px 32px;background:linear-gradient(90deg,#3d3308,#0f1720);border-bottom:2px solid var(--accent);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+header h1{margin:0;font-size:24px;letter-spacing:.5px;}
+header .sub{color:var(--muted);font-size:13px;margin-top:4px;}
+.container{padding:24px 32px;}
+.tabnav{display:flex;gap:10px;margin-bottom:22px;}
+.tab-btn{background:var(--card2);color:var(--muted);border:1px solid var(--border);padding:11px 22px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;letter-spacing:.3px;}
+.tab-btn:hover{border-color:var(--accent);color:var(--text);}
+.tab-btn.active{background:var(--accent);color:#2b2205;border-color:var(--accent);}
+.tabpanel.hidden{display:none;}
+.filters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px;background:var(--card);padding:16px 20px;border-radius:12px;border:1px solid var(--border);align-items:flex-end;}
+.filters label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.filters select{background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;min-width:170px;}
+.multiselect{position:relative;}
+.multiselect-btn{background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;min-width:200px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.multiselect-btn::after{content:'▾';color:var(--muted);font-size:11px;}
+.multiselect-btn:hover{border-color:var(--accent);}
+.multiselect-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px;min-width:250px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.multiselect-panel.open{display:block;}
+.multiselect-panel .ms-actions{display:flex;justify-content:space-between;padding:4px 4px 8px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.multiselect-panel .ms-actions a{font-size:11px;color:var(--accent);cursor:pointer;text-decoration:none;}
+.multiselect-panel label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);padding:5px 4px;border-radius:6px;cursor:pointer;text-transform:none;letter-spacing:normal;margin:0;}
+.multiselect-panel label:hover{background:var(--card);}
+.multiselect-panel input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;}
+.filters .reset{background:var(--accent);color:#2b2205;border:none;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:13px;}
+.filters .reset:hover{filter:brightness(1.08);}
+.note{color:var(--muted);font-size:12px;margin:-10px 0 20px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);}
+.kpi .val{font-size:28px;font-weight:700;}
+.kpi .lbl{color:var(--muted);font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.kpi.warn::before{background:var(--warn);}
+.kpi.danger::before{background:var(--danger);}
+.kpi.success::before{background:var(--success);}
+.kpi.blue::before{background:var(--accent2);}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.card h3{margin:0 0 2px;font-size:15px;color:var(--text);border-left:3px solid var(--accent);padding-left:10px;}
+.card .card-sub{color:var(--muted);font-size:11px;padding-left:13px;margin-bottom:10px;}
+.card.wide{grid-column:span 2;}
+.chart-wrap{position:relative;height:280px;}
+.chart-wrap.tall{height:340px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+th{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.4px;position:sticky;top:0;background:var(--card);}
+tbody tr:hover{background:var(--card2);}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge.ok{background:rgba(0,184,148,.18);color:#00e6b8;}
+.badge.bad{background:rgba(231,76,60,.18);color:#ff7a68;}
+.badge.na{background:rgba(150,150,150,.2);color:#c9c9c9;}
+.table-scroll{max-height:420px;overflow-y:auto;}
+.section-title{margin:32px 0 14px;font-size:18px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}.card.wide{grid-column:span 1;}}
+
+body.light{
+  --bg:#fffbea; --bg2:#f4f6f8; --card:#ffffff; --card2:#faf6e4; --accent:#e6a800; --accent2:#0984e3;
+  --danger:#e74c3c; --warn:#e67e22; --success:#00a884; --text:#1b2733; --muted:#5f6f7f; --border:#eee0b0;
+}
+body.light header{background:linear-gradient(90deg,#FCCC0A,#fffbea 85%);border-bottom:2px solid #FCCC0A;}
+body.light .filters select{background:#fff;}
+body.light .multiselect-btn{background:#fff;}
+body.light .multiselect-panel{background:#fff;}
+body.light .tab-btn{background:#fff;}
+.theme-toggle{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:8px 16px;color:var(--text);cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.theme-toggle:hover{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Dashboard de Indicadores</h1>
+    <div class="sub">Agrícola e Indústria — eficiência operacional, metas e status por unidade</div>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="sub" id="lastUpdate"></div>
+    <button class="theme-toggle" id="btnTheme" onclick="toggleTheme()">
+      <span id="themeIcon">🌙</span> <span id="themeLabel">Modo escuro</span>
+    </button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabnav">
+    <button class="tab-btn active" id="tabBtnAgricola" onclick="switchTab('agricola')">🌾 Agrícola</button>
+    <button class="tab-btn" id="tabBtnIndustria" onclick="switchTab('industria')">🏭 Indústria</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ABA AGRÍCOLA                                                  -->
+  <!-- ============================================================ -->
+  <div id="panel-agricola" class="tabpanel">
+    <div class="filters">
+      <div>
+        <label>Categoria</label>
+        <div class="multiselect" id="fCategoriaWrap">
+          <button type="button" class="multiselect-btn" id="fCategoriaBtn" onclick="toggleMultiselect(event,'fCategoriaPanel')">Todas</button>
+          <div class="multiselect-panel" id="fCategoriaPanel"></div>
+        </div>
+      </div>
+      <div>
+        <label>Status (período mais recente)</label>
+        <select id="fStatus">
+          <option value="">Todos</option>
+          <option value="ok">Meta atingida</option>
+          <option value="bad">Atenção (abaixo da meta)</option>
+        </select>
+      </div>
+      <button class="reset" onclick="resetFiltersAgricola()">Limpar Filtros</button>
+    </div>
+
+    <div class="note">Convenção de períodos observada na base: <strong>SEMANA</strong> = segunda a domingo · <strong>MÊS</strong> de referência = abril · janelas de data indicadas na planilha original: 01/05 a 31/12 e 01/04 a 15/04. Nos gráficos, a linha tracejada <strong style="color:var(--warn)">laranja</strong> é a Meta (com o valor indicado na legenda). Em indicadores com séries <strong>CLE</strong> e <strong>QRZ</strong>, as barras usam cor fixa por série (CLE verde escuro, QRZ verde claro); nos indicadores de série única (Consolidado/Tempo), a barra fica <strong style="color:var(--success)">verde</strong> quando dentro/acima da meta e <strong style="color:var(--danger)">vermelha</strong> quando abaixo (indicadores em que "menor é melhor" — tempo de manobra, consumo, pátio — seguem a lógica invertida).</div>
+
+    <div class="kpis" id="kpiRow"></div>
+
+    <div id="secoes"></div>
+
+    <div class="section-title">Detalhamento de todos os indicadores</div>
+    <div class="card wide">
+      <h3>Todos os registros (por categoria, indicador, série e período)</h3>
+      <div class="table-scroll">
+        <table id="tblDet">
+          <thead><tr><th>Categoria</th><th>Indicador</th><th>Série</th><th>Período</th><th>Valor</th><th>Meta</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ABA INDÚSTRIA                                                 -->
+  <!-- ============================================================ -->
+  <div id="panel-industria" class="tabpanel hidden">
+    <div class="filters">
+      <div>
+        <label>Categoria</label>
+        <div class="multiselect" id="fCategoriaIndWrap">
+          <button type="button" class="multiselect-btn" id="fCategoriaIndBtn" onclick="toggleMultiselect(event,'fCategoriaIndPanel')">Todas</button>
+          <div class="multiselect-panel" id="fCategoriaIndPanel"></div>
+        </div>
+      </div>
+      <div>
+        <label>Unidade</label>
+        <select id="fUnidadeInd">
+          <option value="">Ambas</option>
+          <option value="CLE">Clementina</option>
+          <option value="QRZ">Queiroz</option>
+        </select>
+      </div>
+      <div>
+        <label>Status (período mais recente)</label>
+        <select id="fStatusInd">
+          <option value="">Todos</option>
+          <option value="ok">Meta atingida</option>
+          <option value="bad">Atenção (abaixo da meta)</option>
+        </select>
+      </div>
+      <button class="reset" onclick="resetFiltersIndustria()">Limpar Filtros</button>
+    </div>
+
+    <div class="note">Dados por unidade (<strong>Clementina</strong> = CLE, <strong>Queiroz</strong> = QRZ). Alguns indicadores têm <strong>duas metas</strong>: Meta Mês e Meta Consolidado. Quando os valores são diferentes, o gráfico mostra as duas linhas separadamente — <strong style="color:var(--warn)">Meta Mês em laranja</strong> e <strong style="color:var(--accent2)">Meta Consolidado em azul</strong> (tom mais claro para Clementina, mais escuro para Queiroz); quando só existe uma meta, ela aparece como uma única linha laranja. A direção de melhoria (maior é melhor / menor é melhor) vem da planilha original. Como a meta pode ser diferente entre as unidades, cada barra fica <strong style="color:var(--success)">verde</strong> quando a própria unidade está dentro/acima da sua meta (usando Meta Mês em SF 25/26, SEMANA e MÊS; Meta Consolidado em ACUMULADO) e <strong style="color:var(--danger)">vermelha</strong> quando abaixo. Use o filtro de Unidade para isolar Clementina ou Queiroz.</div>
+
+    <div class="kpis" id="kpiRowInd"></div>
+
+    <div id="secoesInd"></div>
+
+    <div class="section-title">Detalhamento de todos os indicadores</div>
+    <div class="card wide">
+      <h3>Todos os registros (por categoria, indicador, unidade e período)</h3>
+      <div class="table-scroll">
+        <table id="tblDetInd">
+          <thead><tr><th>Categoria</th><th>Indicador</th><th>Unidade</th><th>Período</th><th>Valor</th><th>Meta aplicada</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// UTILIDADES COMPARTILHADAS
+// ============================================================
+function atingiuMeta(valor, meta, lowerIsBetter){
+  if(valor===null || valor===undefined || meta===null || meta===undefined) return null;
+  return lowerIsBetter ? valor<=meta : valor>=meta;
+}
+function statusColor(valor, meta, lowerIsBetter){
+  const ok = atingiuMeta(valor, meta, lowerIsBetter);
+  if(ok===null) return 'rgba(0,0,0,0)';
+  return ok ? getComputedStyle(document.body).getPropertyValue('--success').trim() || '#00b894'
+             : getComputedStyle(document.body).getPropertyValue('--danger').trim() || '#e74c3c';
+}
+function fmtValor(v, unidade){
+  if(v===null || v===undefined) return '-';
+  if(unidade==='%') return (v*100).toFixed(1)+'%';
+  if(unidade==='min') return v+' min';
+  return v.toFixed(2)+' '+unidade;
+}
+function ultimoPeriodoComValor(grupo, serie){
+  for(let i=grupo.periodos.length-1;i>=0;i--){
+    const v = grupo.periodos[i].valores[serie];
+    if(v!==null && v!==undefined) return grupo.periodos[i];
+  }
+  return null;
+}
+function getThemeColors(){
+  const light = document.body.classList.contains('light');
+  return { text: light ? '#1b2733' : '#e8edf2', grid: light ? '#eee0b0' : '#25333f', border: light ? '#eee0b0' : '#25333f' };
+}
+const palette = ['#f7c948','#0984e3','#a29bfe','#fd79a8','#74b9ff','#81ecec'];
+
+function destroyChart(reg, key){ if(reg[key]){ reg[key].destroy(); delete reg[key]; } }
+
+// Plugin para desenhar o valor acima de cada barra
+const valueLabelPlugin = {
+  id:'valueLabel',
+  afterDatasetsDraw(chart){
+    const {ctx} = chart;
+    chart.data.datasets.forEach((ds, dsIndex)=>{
+      if(ds.type !== 'bar') return;
+      const meta = chart.getDatasetMeta(dsIndex);
+      meta.data.forEach((bar, idx)=>{
+        const val = ds.data[idx];
+        if(val===null || val===undefined) return;
+        ctx.save();
+        ctx.fillStyle = ds._labelColor || '#333';
+        ctx.font = '600 11px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(ds._fmt ? ds._fmt(val) : val, bar.x, bar.y - 6);
+        ctx.restore();
+      });
+    });
+  }
+};
+Chart.register(valueLabelPlugin);
+
+function toggleMultiselect(e, panelId){
+  e.stopPropagation();
+  document.getElementById(panelId).classList.toggle('open');
+}
+document.addEventListener('click', (e)=>{
+  [['fCategoriaWrap','fCategoriaPanel'], ['fCategoriaIndWrap','fCategoriaIndPanel']].forEach(([wrapId,panelId])=>{
+    const wrap = document.getElementById(wrapId);
+    if(wrap && !wrap.contains(e.target)) document.getElementById(panelId).classList.remove('open');
+  });
+});
+
+document.getElementById('lastUpdate').textContent = 'Atualizado em ' + new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+// ============================================================
+// ABAS
+// ============================================================
+const chartsAgro = {};
+const chartsInd = {};
+
+function switchTab(tab){
+  document.getElementById('tabBtnAgricola').classList.toggle('active', tab==='agricola');
+  document.getElementById('tabBtnIndustria').classList.toggle('active', tab==='industria');
+  document.getElementById('panel-agricola').classList.toggle('hidden', tab!=='agricola');
+  document.getElementById('panel-industria').classList.toggle('hidden', tab!=='industria');
+  requestAnimationFrame(()=>{
+    const reg = tab==='agricola' ? chartsAgro : chartsInd;
+    Object.values(reg).forEach(c=>c.resize());
+  });
+}
+
+// ============================================================
+// DADOS — AGRÍCOLA (Agrícola.xlsx / Planilha1)
+// ============================================================
+// ==DADOS_AGRICOLA_START==
+const grupos = [
+  { id:'colheita_op', categoria:'Colheita', nome:'Eficiência Operacional Colheita', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.814, QRZ:0.81}, meta:0.76},
+      {periodo:'SEMANA', valores:{CLE:0.801, QRZ:0.813}, meta:0.76},
+      {periodo:'MÊS', valores:{CLE:0.796, QRZ:0.808}, meta:0.76},
+      {periodo:'ACUMULADO', valores:{CLE:0.807, QRZ:0.82}, meta:0.76},
+    ]},
+  { id:'colheita_motor', categoria:'Colheita', nome:'Eficiência Motor Colheita', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.915, QRZ:0.918}, meta:0.90},
+      {periodo:'SEMANA', valores:{CLE:0.916, QRZ:0.911}, meta:0.90},
+      {periodo:'MÊS', valores:{CLE:0.915, QRZ:0.916}, meta:0.90},
+      {periodo:'ACUMULADO', valores:{CLE:0.916, QRZ:0.922}, meta:0.90},
+    ]},
+  { id:'transporte', categoria:'Transporte', nome:'Eficiência Operacional Transporte', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.849, QRZ:0.836}, meta:0.85},
+      {periodo:'SEMANA', valores:{CLE:0.8394, QRZ:0.893}, meta:0.85},
+      {periodo:'MÊS', valores:{CLE:0.8438, QRZ:0.8902}, meta:0.85},
+      {periodo:'ACUMULADO', valores:{CLE:0.869, QRZ:0.881}, meta:0.85},
+    ]},
+  { id:'vinhaca_op', categoria:'Vinhaça Localizada', nome:'Eficiência Operacional Vinhaça Localizada', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.6245}, meta:0.76},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.8538}, meta:0.76},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.8559}, meta:0.76},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.8774}, meta:0.76},
+    ]},
+  { id:'vinhaca_motor', categoria:'Vinhaça Localizada', nome:'Eficiência Motor Vinhaça Localizada', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.895}, meta:0.90},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.9254}, meta:0.90},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.9067}, meta:0.90},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.905}, meta:0.90},
+    ]},
+  { id:'rodovinhaca', categoria:'Rodovinhaça', nome:'Eficiência Operacional Rodovinhaça', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.703}, meta:0.85},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.9362}, meta:0.85},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.9355}, meta:0.85},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.8878}, meta:0.85},
+    ]},
+  { id:'plantio_op_f1', categoria:'Plantio', nome:'Eficiência Operacional Plantio — F1', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.481}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.4881}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.4981}, meta:0.50},
+    ]},
+  { id:'plantio_motor_f1', categoria:'Plantio', nome:'Eficiência Motor Plantio — F1', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.6311}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.581}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5951}, meta:0.40},
+    ]},
+  { id:'plantio_op_f2', categoria:'Plantio', nome:'Eficiência Operacional Plantio — F2', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.4505}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.4705}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.466}, meta:0.50},
+    ]},
+  { id:'plantio_motor_f2', categoria:'Plantio', nome:'Eficiência Motor Plantio — F2', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.5404}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.537}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5362}, meta:0.40},
+    ]},
+  { id:'plantio_op_media', categoria:'Plantio', nome:'Eficiência Operacional Plantio — Média Geral', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5684}, meta:0.50},
+    ]},
+  { id:'plantio_motor_media', categoria:'Plantio', nome:'Eficiência Motor Plantio — Média Geral', unidade:'%', lowerIsBetter:false,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.6137}, meta:0.40},
+    ]},
+  { id:'manobra', categoria:'Frota e Consumo', nome:'Tempo de Manobra', unidade:'h', lowerIsBetter:true,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:2.93}, meta:1.2},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:0.55}, meta:1.2},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.55}, meta:1.2},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.5}, meta:1.2},
+    ]},
+  { id:'consumo_canavieiro', categoria:'Frota e Consumo', nome:'Redução de Consumo Canavieiro', unidade:'L/TON', lowerIsBetter:true,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:1.15}, meta:1.0},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:1.05}, meta:1.0},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:1.0}, meta:1.0},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.84}, meta:1.0},
+    ]},
+  { id:'pneus', categoria:'Frota e Consumo', nome:'Otimização de Pneus', unidade:'%', lowerIsBetter:true,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:0.4318}, meta:0.38},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:0.29}, meta:0.38},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.29}, meta:0.38},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.28}, meta:0.38},
+    ]},
+  { id:'consumo_colhedora', categoria:'Frota e Consumo', nome:'Redução de Consumo Colhedora', unidade:'L/TON', lowerIsBetter:true,
+    series:['CONSOLIDADO'],
+    periodos:[
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:1.2}, meta:1.0},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:1.05}, meta:1.0},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.92}, meta:1.0},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.89}, meta:1.0},
+    ]},
+  { id:'patio', categoria:'Pátio', nome:'Tempo de Pátio Canavieiro', unidade:'min', lowerIsBetter:true,
+    series:['TEMPO'],
+    periodos:[
+      {periodo:'SF 25/26', valores:{TEMPO:45}, meta:35},
+      {periodo:'SF 26/27', valores:{TEMPO:10}, meta:15},
+    ]},
+];
+// ==DADOS_AGRICOLA_END==
+
+function grupoStatus(grupo){
+  let temDado=false, algumaFora=false;
+  grupo.series.forEach(s=>{
+    const p = ultimoPeriodoComValor(grupo, s);
+    if(p){
+      temDado=true;
+      const ok = atingiuMeta(p.valores[s], p.meta, grupo.lowerIsBetter);
+      if(ok===false) algumaFora=true;
+    }
+  });
+  if(!temDado) return null;
+  return algumaFora ? 'bad' : 'ok';
+}
+
+// ---- Filtro de Categoria (multiselect) — Agrícola ----
+const categorias = [...new Set(grupos.map(g=>g.categoria))];
+const categoriaSelected = new Set();
+
+function buildCategoriaPanel(){
+  const panel = document.getElementById('fCategoriaPanel');
+  panel.innerHTML = `
+    <div class="ms-actions">
+      <a onclick="selectAllCategoria(event)">Selecionar todas</a>
+      <a onclick="clearCategoria(event)">Limpar</a>
+    </div>
+    ${categorias.map(c => `
+      <label>
+        <input type="checkbox" value="${c}" onchange="onCategoriaChange(event)">
+        ${c}
+      </label>`).join('')}
+  `;
+}
+function updateCategoriaBtnLabel(){
+  const btn = document.getElementById('fCategoriaBtn');
+  const n = categoriaSelected.size;
+  if(n === 0) btn.textContent = 'Todas';
+  else if(n <= 2) btn.textContent = [...categoriaSelected].join(', ');
+  else btn.textContent = `${n} selecionadas`;
+}
+function onCategoriaChange(e){
+  const v = e.target.value;
+  if(e.target.checked) categoriaSelected.add(v); else categoriaSelected.delete(v);
+  updateCategoriaBtnLabel();
+  renderAgricola();
+}
+function selectAllCategoria(e){
+  e.preventDefault(); e.stopPropagation();
+  categorias.forEach(v=>categoriaSelected.add(v));
+  document.querySelectorAll('#fCategoriaPanel input[type=checkbox]').forEach(cb=>cb.checked=true);
+  updateCategoriaBtnLabel(); renderAgricola();
+}
+function clearCategoria(e){
+  e.preventDefault(); e.stopPropagation();
+  categoriaSelected.clear();
+  document.querySelectorAll('#fCategoriaPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaBtnLabel(); renderAgricola();
+}
+buildCategoriaPanel();
+
+document.getElementById('fStatus').addEventListener('change', renderAgricola);
+
+function resetFiltersAgricola(){
+  categoriaSelected.clear();
+  document.querySelectorAll('#fCategoriaPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaBtnLabel();
+  document.getElementById('fStatus').value='';
+  renderAgricola();
+}
+
+function getFilteredAgricola(){
+  const fStatus = document.getElementById('fStatus').value;
+  return grupos.filter(g=>{
+    if(categoriaSelected.size>0 && !categoriaSelected.has(g.categoria)) return false;
+    if(fStatus){
+      const st = grupoStatus(g);
+      if(st!==fStatus) return false;
+    }
+    return true;
+  });
+}
+
+// ---- Render Agrícola ----
+function renderAgricola(){
+  const filtered = getFilteredAgricola();
+  const tc = getThemeColors();
+
+  let totalSeries=0, acima=0, abaixo=0, somaAting=0, countAting=0;
+  grupos.forEach(g=>{
+    g.series.forEach(s=>{
+      const p = ultimoPeriodoComValor(g, s);
+      if(p){
+        totalSeries++;
+        const ok = atingiuMeta(p.valores[s], p.meta, g.lowerIsBetter);
+        if(ok) acima++; else abaixo++;
+        const ratio = g.lowerIsBetter ? (p.meta / p.valores[s]) : (p.valores[s] / p.meta);
+        somaAting += ratio; countAting++;
+      }
+    });
+  });
+  const pctAting = countAting ? ((somaAting/countAting)*100).toFixed(0)+'%' : '-';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi blue"><div class="val">${categorias.length}</div><div class="lbl">Categorias monitoradas</div></div>
+    <div class="kpi"><div class="val">${totalSeries}</div><div class="lbl">Indicadores acompanhados</div></div>
+    <div class="kpi success"><div class="val">${acima}</div><div class="lbl">Dentro/Acima da meta</div></div>
+    <div class="kpi danger"><div class="val">${abaixo}</div><div class="lbl">Abaixo da meta</div></div>
+    <div class="kpi warn"><div class="val">${pctAting}</div><div class="lbl">Atingimento médio da meta</div></div>
+  `;
+
+  const secoesEl = document.getElementById('secoes');
+  secoesEl.innerHTML = '';
+  Object.keys(chartsAgro).forEach(k=>destroyChart(chartsAgro,k));
+
+  const porCategoria = {};
+  filtered.forEach(g=>{ (porCategoria[g.categoria] = porCategoria[g.categoria]||[]).push(g); });
+
+  categorias.forEach(cat=>{
+    const gruposCat = porCategoria[cat];
+    if(!gruposCat || !gruposCat.length) return;
+
+    const secTitle = document.createElement('div');
+    secTitle.className = 'section-title';
+    secTitle.textContent = cat;
+    secoesEl.appendChild(secTitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    secoesEl.appendChild(grid);
+
+    gruposCat.forEach(g=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      const canvasId = 'chart_'+g.id;
+      card.innerHTML = `<h3>${g.nome}</h3><div class="card-sub">Unidade: ${g.unidade} · Série(s): ${g.series.join(', ')}</div><div class="chart-wrap"><canvas id="${canvasId}"></canvas></div>`;
+      grid.appendChild(card);
+    });
+
+    gruposCat.forEach(g=>{
+      const canvasId = 'chart_'+g.id;
+      const labels = g.periodos.map(p=>p.periodo);
+      const corFixaPorSerie = { CLE:'#1e8449', QRZ:'#82e0aa' };
+      const usaCorFixa = g.series.length > 1 && g.series.every(s=>corFixaPorSerie[s]);
+      const datasets = g.series.map((serie, idx)=>{
+        const data = g.periodos.map(p=> (p.valores[serie]===null || p.valores[serie]===undefined) ? null : p.valores[serie]);
+        const colors = usaCorFixa
+          ? g.periodos.map(()=> corFixaPorSerie[serie])
+          : g.periodos.map(p=> statusColor(p.valores[serie], p.meta, g.lowerIsBetter));
+        return {
+          type:'bar',
+          label:serie,
+          data,
+          backgroundColor:colors,
+          borderRadius:6,
+          maxBarThickness:44,
+          _fmt:(v)=>fmtValor(v, g.unidade),
+          _labelColor: tc.text,
+        };
+      });
+      const metaRef = g.periodos.find(p=> p.meta!==null && p.meta!==undefined);
+      const metaLabel = metaRef ? `Meta (${fmtValor(metaRef.meta, g.unidade)})` : 'Meta';
+      datasets.push({
+        type:'line',
+        label:metaLabel,
+        data: g.periodos.map(p=>p.meta),
+        borderColor:'#f39c12',
+        backgroundColor:'#f39c12',
+        borderDash:[6,4],
+        borderWidth:2,
+        pointRadius:0,
+        pointHoverRadius:4,
+        fill:false,
+        tension:0,
+      });
+
+      destroyChart(chartsAgro, g.id);
+      chartsAgro[g.id] = new Chart(document.getElementById(canvasId), {
+        type:'bar',
+        data:{labels, datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          layout:{padding:{top:18}},
+          plugins:{
+            legend:{position:'bottom', labels:{color:tc.text, boxWidth:14, padding:12}},
+            tooltip:{callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${fmtValor(ctx.raw, g.unidade)}` }}
+          },
+          scales:{
+            x:{ticks:{color:tc.text}, grid:{display:false}},
+            y:{ticks:{color:tc.text, callback:(v)=> g.unidade==='%' ? (v*100).toFixed(0)+'%' : v}, grid:{color:tc.grid}, beginAtZero:true}
+          }
+        }
+      });
+    });
+  });
+
+  const linhas = [];
+  filtered.forEach(g=>{
+    g.series.forEach(s=>{
+      g.periodos.forEach(p=>{
+        const v = p.valores[s];
+        const ok = atingiuMeta(v, p.meta, g.lowerIsBetter);
+        linhas.push({categoria:g.categoria, indicador:g.nome, serie:s, periodo:p.periodo, valor:v, meta:p.meta, unidade:g.unidade, status:ok});
+      });
+    });
+  });
+  const tb = document.querySelector('#tblDet tbody');
+  tb.innerHTML = linhas.map(l=>{
+    let badge = '<span class="badge na">Sem dado</span>';
+    if(l.status===true) badge = '<span class="badge ok">Acima/Meta</span>';
+    else if(l.status===false) badge = '<span class="badge bad">Abaixo da Meta</span>';
+    return `<tr>
+      <td>${l.categoria}</td>
+      <td>${l.indicador}</td>
+      <td>${l.serie}</td>
+      <td>${l.periodo}</td>
+      <td>${fmtValor(l.valor, l.unidade)}</td>
+      <td>${fmtValor(l.meta, l.unidade)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// DADOS — INDÚSTRIA (Industria.xlsx / abas CLE e QRZ)
+// CLE = Clementina · QRZ = Queiroz
+// ============================================================
+// ==DADOS_INDUSTRIA_START==
+const gruposIndustria = [
+  { id:'extracao_art', categoria:'Extração e Fermentação', nome:'Extração ART', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.9624, QRZ:0.9504}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9628, QRZ:0.9539}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9626, QRZ:0.9537}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9621, QRZ:0.9516}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_destilacao', categoria:'Extração e Fermentação', nome:'Eficiência Destilação', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.9953, QRZ:0.9979}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9974, QRZ:0.9992}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9918, QRZ:0.9992}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9924, QRZ:0.9968}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_fermentacao', categoria:'Extração e Fermentação', nome:'Eficiência Fermentação', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.8985, QRZ:0.9025}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9014, QRZ:0.8801}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9174, QRZ:0.8767}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9042, QRZ:0.8929}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_perda_aspersor', categoria:'Perdas de Processo', nome:'Perda Aspersor', unidade:'%', lowerIsBetter:true,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.00993, QRZ:0.01218}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'SEMANA', valores:{CLE:0.012, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'MÊS', valores:{CLE:0.022, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'ACUMULADO', valores:{CLE:0.007, QRZ:0.005}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+    ]},
+  { id:'ind_perda_residuaria', categoria:'Perdas de Processo', nome:'Perda Residuária', unidade:'%', lowerIsBetter:true,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.0067, QRZ:0.0058}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'SEMANA', valores:{CLE:0.007, QRZ:0.0023}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'MÊS', valores:{CLE:0.007, QRZ:0.002}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'ACUMULADO', valores:{CLE:0.006, QRZ:0.008}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+    ]},
+  { id:'ind_ad_ph', categoria:'Água de Diluição (AD)', nome:'AD. Controle de PH', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9978, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9209, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.8957, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_pol_torta', categoria:'Perdas de Processo', nome:'Pol da Torta', unidade:'%', lowerIsBetter:true,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:0.0196, QRZ:0.0471}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.021, QRZ:0.033}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.021, QRZ:0.0323}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.0216, QRZ:0.0327}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_ad_pressao21', categoria:'Água de Diluição (AD)', nome:'AD. Pressão de 21', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.968, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9735, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.968, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+  { id:'ind_ad_temp21', categoria:'Água de Diluição (AD)', nome:'AD. Temperatura do 21', unidade:'%', lowerIsBetter:false,
+    periodos:[
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:1, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9951, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9877, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+    ]},
+];
+// ==DADOS_INDUSTRIA_END==
+
+const nomeUnidade = { CLE:'Clementina', QRZ:'Queiroz' };
+const corMetaMesUnidade = { CLE:'#f39c12', QRZ:'#c0710a' };
+const corMetaConsUnidade = { CLE:'#0984e3', QRZ:'#045a8d' };
+const dashMetaUnidade = { CLE:[6,4], QRZ:[2,3] };
+
+function metaAplicada(p, unidade){
+  const mm = p.metaMes[unidade];
+  const mc = p.metaCons[unidade];
+  if(p.periodo === 'ACUMULADO') return (mc!==null && mc!==undefined) ? mc : mm;
+  return (mm!==null && mm!==undefined) ? mm : mc;
+}
+
+// Gera os datasets de linha de meta para uma unidade: quando o indicador tem
+// Meta Mês E Meta Consolidado (valores diferentes), cria duas linhas separadas
+// (Meta Mês em laranja, Meta Consolidado em azul); quando só existe uma meta,
+// cria uma única linha (laranja).
+function metaLineDatasets(g, u){
+  const mesVal = g.periodos.map(p=>p.metaMes[u]).find(v=>v!==null && v!==undefined);
+  const consVal = g.periodos.map(p=>p.metaCons[u]).find(v=>v!==null && v!==undefined);
+  const temMes = mesVal!==undefined && mesVal!==null;
+  const temCons = consVal!==undefined && consVal!==null;
+  const out = [];
+  if(temMes && temCons && mesVal!==consVal){
+    out.push({
+      type:'line', label:`Meta Mês ${nomeUnidade[u]} (${fmtValor(mesVal, g.unidade)})`,
+      data: g.periodos.map(()=>mesVal),
+      borderColor: corMetaMesUnidade[u], backgroundColor: corMetaMesUnidade[u],
+      borderDash: dashMetaUnidade[u], borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0,
+    });
+    out.push({
+      type:'line', label:`Meta Consolidado ${nomeUnidade[u]} (${fmtValor(consVal, g.unidade)})`,
+      data: g.periodos.map(()=>consVal),
+      borderColor: corMetaConsUnidade[u], backgroundColor: corMetaConsUnidade[u],
+      borderDash: dashMetaUnidade[u], borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0,
+    });
+  } else if(temMes || temCons){
+    const valorUnico = temMes ? mesVal : consVal;
+    out.push({
+      type:'line', label:`Meta ${nomeUnidade[u]} (${fmtValor(valorUnico, g.unidade)})`,
+      data: g.periodos.map(()=>valorUnico),
+      borderColor: corMetaMesUnidade[u], backgroundColor: corMetaMesUnidade[u],
+      borderDash: dashMetaUnidade[u], borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0,
+    });
+  }
+  return out;
+}
+
+
+function grupoStatusInd(grupo){
+  let temDado=false, algumaFora=false;
+  ['CLE','QRZ'].forEach(u=>{
+    const p = ultimoPeriodoComValor(grupo, u);
+    if(p){
+      temDado=true;
+      const ok = atingiuMeta(p.valores[u], metaAplicada(p,u), grupo.lowerIsBetter);
+      if(ok===false) algumaFora=true;
+    }
+  });
+  if(!temDado) return null;
+  return algumaFora ? 'bad' : 'ok';
+}
+
+// ---- Filtro de Categoria (multiselect) — Indústria ----
+const categoriasInd = [...new Set(gruposIndustria.map(g=>g.categoria))];
+const categoriaIndSelected = new Set();
+
+function buildCategoriaIndPanel(){
+  const panel = document.getElementById('fCategoriaIndPanel');
+  panel.innerHTML = `
+    <div class="ms-actions">
+      <a onclick="selectAllCategoriaInd(event)">Selecionar todas</a>
+      <a onclick="clearCategoriaInd(event)">Limpar</a>
+    </div>
+    ${categoriasInd.map(c => `
+      <label>
+        <input type="checkbox" value="${c}" onchange="onCategoriaIndChange(event)">
+        ${c}
+      </label>`).join('')}
+  `;
+}
+function updateCategoriaIndBtnLabel(){
+  const btn = document.getElementById('fCategoriaIndBtn');
+  const n = categoriaIndSelected.size;
+  if(n === 0) btn.textContent = 'Todas';
+  else if(n <= 2) btn.textContent = [...categoriaIndSelected].join(', ');
+  else btn.textContent = `${n} selecionadas`;
+}
+function onCategoriaIndChange(e){
+  const v = e.target.value;
+  if(e.target.checked) categoriaIndSelected.add(v); else categoriaIndSelected.delete(v);
+  updateCategoriaIndBtnLabel();
+  renderIndustria();
+}
+function selectAllCategoriaInd(e){
+  e.preventDefault(); e.stopPropagation();
+  categoriasInd.forEach(v=>categoriaIndSelected.add(v));
+  document.querySelectorAll('#fCategoriaIndPanel input[type=checkbox]').forEach(cb=>cb.checked=true);
+  updateCategoriaIndBtnLabel(); renderIndustria();
+}
+function clearCategoriaInd(e){
+  e.preventDefault(); e.stopPropagation();
+  categoriaIndSelected.clear();
+  document.querySelectorAll('#fCategoriaIndPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaIndBtnLabel(); renderIndustria();
+}
+buildCategoriaIndPanel();
+
+document.getElementById('fUnidadeInd').addEventListener('change', renderIndustria);
+document.getElementById('fStatusInd').addEventListener('change', renderIndustria);
+
+function resetFiltersIndustria(){
+  categoriaIndSelected.clear();
+  document.querySelectorAll('#fCategoriaIndPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaIndBtnLabel();
+  document.getElementById('fUnidadeInd').value='';
+  document.getElementById('fStatusInd').value='';
+  renderIndustria();
+}
+
+function getFilteredIndustria(){
+  const fStatus = document.getElementById('fStatusInd').value;
+  return gruposIndustria.filter(g=>{
+    if(categoriaIndSelected.size>0 && !categoriaIndSelected.has(g.categoria)) return false;
+    if(fStatus){
+      const st = grupoStatusInd(g);
+      if(st!==fStatus) return false;
+    }
+    return true;
+  });
+}
+
+// ---- Render Indústria ----
+function renderIndustria(){
+  const filtered = getFilteredIndustria();
+  const tc = getThemeColors();
+  const unidadeFiltro = document.getElementById('fUnidadeInd').value;
+  const unidadesToShow = unidadeFiltro ? [unidadeFiltro] : ['CLE','QRZ'];
+
+  // KPIs (sempre sobre a base completa, não filtrada — mesmo padrão da aba Agrícola)
+  let totalSeries=0, acima=0, abaixo=0, somaAting=0, countAting=0;
+  gruposIndustria.forEach(g=>{
+    ['CLE','QRZ'].forEach(u=>{
+      const p = ultimoPeriodoComValor(g, u);
+      if(p){
+        const meta = metaAplicada(p, u);
+        if(meta===null || meta===undefined) return;
+        totalSeries++;
+        const ok = atingiuMeta(p.valores[u], meta, g.lowerIsBetter);
+        if(ok) acima++; else abaixo++;
+        const ratio = g.lowerIsBetter ? (meta / p.valores[u]) : (p.valores[u] / meta);
+        somaAting += ratio; countAting++;
+      }
+    });
+  });
+  const pctAting = countAting ? ((somaAting/countAting)*100).toFixed(0)+'%' : '-';
+
+  document.getElementById('kpiRowInd').innerHTML = `
+    <div class="kpi blue"><div class="val">${categoriasInd.length}</div><div class="lbl">Categorias monitoradas</div></div>
+    <div class="kpi"><div class="val">${totalSeries}</div><div class="lbl">Indicadores acompanhados</div></div>
+    <div class="kpi success"><div class="val">${acima}</div><div class="lbl">Dentro/Acima da meta</div></div>
+    <div class="kpi danger"><div class="val">${abaixo}</div><div class="lbl">Abaixo da meta</div></div>
+    <div class="kpi warn"><div class="val">${pctAting}</div><div class="lbl">Atingimento médio da meta</div></div>
+  `;
+
+  const secoesEl = document.getElementById('secoesInd');
+  secoesEl.innerHTML = '';
+  Object.keys(chartsInd).forEach(k=>destroyChart(chartsInd,k));
+
+  const porCategoria = {};
+  filtered.forEach(g=>{ (porCategoria[g.categoria] = porCategoria[g.categoria]||[]).push(g); });
+
+  categoriasInd.forEach(cat=>{
+    const gruposCat = porCategoria[cat];
+    if(!gruposCat || !gruposCat.length) return;
+
+    const secTitle = document.createElement('div');
+    secTitle.className = 'section-title';
+    secTitle.textContent = cat;
+    secoesEl.appendChild(secTitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    secoesEl.appendChild(grid);
+
+    gruposCat.forEach(g=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      const canvasId = 'chartInd_'+g.id;
+      const direcaoTxt = g.lowerIsBetter ? 'menor é melhor' : 'maior é melhor';
+      card.innerHTML = `<h3>${g.nome}</h3><div class="card-sub">Unidade: ${g.unidade} · Direção: ${direcaoTxt}</div><div class="chart-wrap"><canvas id="${canvasId}"></canvas></div>`;
+      grid.appendChild(card);
+    });
+
+    gruposCat.forEach(g=>{
+      const canvasId = 'chartInd_'+g.id;
+      const labels = g.periodos.map(p=>p.periodo);
+      const datasets = [];
+
+      unidadesToShow.forEach(u=>{
+        const data = g.periodos.map(p=> (p.valores[u]===null || p.valores[u]===undefined) ? null : p.valores[u]);
+        const colors = g.periodos.map(p=> statusColor(p.valores[u], metaAplicada(p,u), g.lowerIsBetter));
+        datasets.push({
+          type:'bar',
+          label: nomeUnidade[u],
+          data,
+          backgroundColor:colors,
+          borderRadius:6,
+          maxBarThickness:44,
+          _fmt:(v)=>fmtValor(v, g.unidade),
+          _labelColor: tc.text,
+        });
+      });
+
+      unidadesToShow.forEach(u=>{
+        datasets.push(...metaLineDatasets(g, u));
+      });
+
+      destroyChart(chartsInd, g.id);
+      chartsInd[g.id] = new Chart(document.getElementById(canvasId), {
+        type:'bar',
+        data:{labels, datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          layout:{padding:{top:18}},
+          plugins:{
+            legend:{position:'bottom', labels:{color:tc.text, boxWidth:14, padding:12}},
+            tooltip:{callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${fmtValor(ctx.raw, g.unidade)}` }}
+          },
+          scales:{
+            x:{ticks:{color:tc.text}, grid:{display:false}},
+            y:{ticks:{color:tc.text, callback:(v)=> g.unidade==='%' ? (v*100).toFixed(1)+'%' : v}, grid:{color:tc.grid}, beginAtZero:true}
+          }
+        }
+      });
+    });
+  });
+
+  const linhas = [];
+  filtered.forEach(g=>{
+    unidadesToShow.forEach(u=>{
+      g.periodos.forEach(p=>{
+        const v = p.valores[u];
+        const meta = metaAplicada(p,u);
+        const ok = atingiuMeta(v, meta, g.lowerIsBetter);
+        linhas.push({categoria:g.categoria, indicador:g.nome, unidade:nomeUnidade[u], periodo:p.periodo, valor:v, meta:meta, unidadeMedida:g.unidade, status:ok});
+      });
+    });
+  });
+  const tbInd = document.querySelector('#tblDetInd tbody');
+  tbInd.innerHTML = linhas.map(l=>{
+    let badge = '<span class="badge na">Sem dado</span>';
+    if(l.status===true) badge = '<span class="badge ok">Acima/Meta</span>';
+    else if(l.status===false) badge = '<span class="badge bad">Abaixo da Meta</span>';
+    return `<tr>
+      <td>${l.categoria}</td>
+      <td>${l.indicador}</td>
+      <td>${l.unidade}</td>
+      <td>${l.periodo}</td>
+      <td>${fmtValor(l.valor, l.unidadeMedida)}</td>
+      <td>${fmtValor(l.meta, l.unidadeMedida)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// TEMA
+// ============================================================
+function aplicarTemaSalvo(){
+  const salvo = localStorage.getItem('tema_dashboard_setor');
+  const claro = salvo === 'claro';
+  document.body.classList.toggle('light', claro);
+  document.getElementById('themeIcon').textContent = claro ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = claro ? 'Modo claro' : 'Modo escuro';
+}
+function toggleTheme(){
+  const claro = document.body.classList.toggle('light');
+  localStorage.setItem('tema_dashboard_setor', claro ? 'claro' : 'escuro');
+  document.getElementById('themeIcon').textContent = claro ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = claro ? 'Modo claro' : 'Modo escuro';
+  renderAgricola();
+  renderIndustria();
+}
+
+aplicarTemaSalvo();
+renderAgricola();
+renderIndustria();
+</script>
+</body>
+</html>
