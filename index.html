@@ -649,10 +649,10 @@ function renderAgricola(){
 const gruposIndustria = [
   { id:'extracao_art', categoria:'Extração e Fermentação', nome:'Extração ART', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.9624, QRZ:0.9504}, metaMes:{CLE:0.9613, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.9605, QRZ:0.9539}, metaMes:{CLE:0.9613, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9623, QRZ:0.9537}, metaMes:{CLE:0.9613, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9621, QRZ:0.9516}, metaMes:{CLE:0.9613, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"SF 25/26", valores:{CLE:0.9624, QRZ:0.9504}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"SEMANA", valores:{CLE:0.9605, QRZ:0.9539}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"MÊS", valores:{CLE:0.9613, QRZ:0.9537}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"ACUMULADO", valores:{CLE:0.9621, QRZ:0.9516}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_destilacao', categoria:'Extração e Fermentação', nome:'Eficiência Destilação', unidade:'%', lowerIsBetter:false,
     periodos:[
@@ -663,10 +663,10 @@ const gruposIndustria = [
     ]},
   { id:'ind_fermentacao', categoria:'Extração e Fermentação', nome:'Eficiência Fermentação', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.8985, QRZ:0.9025}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.9014, QRZ:0.8606}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9174, QRZ:0.8701}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9042, QRZ:0.8904}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"SF 25/26", valores:{CLE:0.8985, QRZ:0.9025}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"SEMANA", valores:{CLE:0.8617, QRZ:0.8606}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"MÊS", valores:{CLE:0.9172, QRZ:0.8701}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:"ACUMULADO", valores:{CLE:0.9009, QRZ:0.8904}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_perda_aspersor', categoria:'Perdas de Processo', nome:'Perda Aspersor', unidade:'%', lowerIsBetter:true,
     periodos:[
@@ -1000,6 +1000,19 @@ function toggleTheme(){
 aplicarTemaSalvo();
 renderAgricola();
 renderIndustria();
+
+// Sincroniza tema com o Portal OPEX via postMessage
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SET_THEME') {
+    var isLight = e.data.theme === 'light';
+    document.body.classList.toggle('light', isLight);
+    localStorage.setItem('tema_dashboard_setor', isLight ? 'claro' : 'escuro');
+    document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+    document.getElementById('themeLabel').textContent = isLight ? 'Modo claro' : 'Modo escuro';
+    renderAgricola();
+    renderIndustria();
+  }
+});
 </script>
 </body>
 </html>
