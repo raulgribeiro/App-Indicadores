@@ -97,6 +97,7 @@ body.light .tab-btn{background:#fff;}
   <div class="tabnav">
     <button class="tab-btn active" id="tabBtnAgricola" onclick="switchTab('agricola')">🌾 Agrícola</button>
     <button class="tab-btn" id="tabBtnIndustria" onclick="switchTab('industria')">🏭 Indústria</button>
+    <button class="tab-btn" id="tabBtnManutencao" onclick="switchTab('manutencao')">🔧 Manutenção</button>
   </div>
 
   <!-- ============================================================ -->
@@ -122,7 +123,7 @@ body.light .tab-btn{background:#fff;}
       <button class="reset" onclick="resetFiltersAgricola()">Limpar Filtros</button>
     </div>
 
-    <div class="note">Convenção de períodos observada na base: <strong>SEMANA</strong> = segunda a domingo · <strong>MÊS</strong> de referência = abril · janelas de data indicadas na planilha original: 01/05 a 31/12 e 01/04 a 15/04. Nos gráficos, a linha tracejada <strong style="color:var(--warn)">laranja</strong> é a Meta (com o valor indicado na legenda). Em indicadores com séries <strong>CLE</strong> e <strong>QRZ</strong>, as barras usam cor fixa por série (CLE verde escuro, QRZ verde claro); nos indicadores de série única (Consolidado/Tempo), a barra fica <strong style="color:var(--success)">verde</strong> quando dentro/acima da meta e <strong style="color:var(--danger)">vermelha</strong> quando abaixo (indicadores em que "menor é melhor" — tempo de manobra, consumo, pátio — seguem a lógica invertida).</div>
+    <div class="note">Convenção de períodos observada na base: <strong>SEMANA</strong> = segunda a domingo · <strong>MÊS</strong> de referência = abril · janelas de data indicadas na planilha original: 01/05 a 31/12 e 01/04 a 15/04. Nos gráficos, a linha tracejada <strong style="color:var(--warn)">laranja</strong> é a Meta (com o valor indicado na legenda). Em indicadores com séries <strong>CLE</strong> e <strong>QRZ</strong>, as barras ficam <strong style="color:#1e8449">verde escuro (CLE)</strong> / <strong style="color:#82e0aa">verde claro (QRZ)</strong> quando dentro/acima da meta, e <strong style="color:#a93226">vermelho escuro (CLE)</strong> / <strong style="color:#f1948a">vermelho claro (QRZ)</strong> quando abaixo; nos indicadores de série única (Consolidado/Tempo), a barra fica <strong style="color:var(--success)">verde</strong> quando dentro/acima da meta e <strong style="color:var(--danger)">vermelha</strong> quando abaixo (indicadores em que "menor é melhor" — tempo de manobra, consumo, pátio — seguem a lógica invertida).</div>
 
     <div class="kpis" id="kpiRow"></div>
 
@@ -171,7 +172,7 @@ body.light .tab-btn{background:#fff;}
       <button class="reset" onclick="resetFiltersIndustria()">Limpar Filtros</button>
     </div>
 
-    <div class="note">Dados por unidade (<strong>Clementina</strong> = CLE, <strong>Queiroz</strong> = QRZ). As barras usam cor fixa por unidade — <strong style="color:#1e8449">Clementina verde escuro</strong> e <strong style="color:#82e0aa">Queiroz verde claro</strong>. Alguns indicadores têm <strong>duas metas</strong>: Meta Mês e Meta Consolidado. Quando os valores são diferentes, o gráfico mostra as duas linhas separadamente, com o valor indicado na legenda — <strong style="color:var(--warn)">Meta Mês em laranja</strong> e <strong style="color:var(--accent2)">Meta Consolidado em azul</strong> (tom mais claro para Clementina, mais escuro para Queiroz); quando só existe uma meta, ela aparece como uma única linha laranja com o valor. A direção de melhoria (maior é melhor / menor é melhor) vem da planilha original. Use o filtro de Unidade para isolar Clementina ou Queiroz, e a tabela de detalhamento abaixo mostra o status (acima/abaixo da meta) de cada registro.</div>
+    <div class="note">Dados por unidade (<strong>Clementina</strong> = CLE, <strong>Queiroz</strong> = QRZ). As barras ficam <strong style="color:#1e8449">verde escuro (Clementina)</strong> / <strong style="color:#82e0aa">verde claro (Queiroz)</strong> quando a própria unidade está dentro/acima da sua meta, e <strong style="color:#a93226">vermelho escuro (Clementina)</strong> / <strong style="color:#f1948a">vermelho claro (Queiroz)</strong> quando abaixo. Alguns indicadores têm <strong>duas metas</strong>: Meta Mês e Meta Consolidado. Quando os valores são diferentes, o gráfico mostra as duas linhas separadamente, com o valor indicado na legenda — <strong style="color:var(--warn)">Meta Mês em laranja</strong> e <strong style="color:var(--accent2)">Meta Consolidado em azul</strong> (tom mais claro para Clementina, mais escuro para Queiroz); quando só existe uma meta, ela aparece como uma única linha laranja com o valor. A direção de melhoria (maior é melhor / menor é melhor) vem da planilha original. Use o filtro de Unidade para isolar Clementina ou Queiroz.</div>
 
     <div class="kpis" id="kpiRowInd"></div>
 
@@ -183,6 +184,55 @@ body.light .tab-btn{background:#fff;}
       <div class="table-scroll">
         <table id="tblDetInd">
           <thead><tr><th>Categoria</th><th>Indicador</th><th>Unidade</th><th>Período</th><th>Valor</th><th>Meta aplicada</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ABA MANUTENÇÃO (AUTOMOTIVA)                                   -->
+  <!-- ============================================================ -->
+  <div id="panel-manutencao" class="tabpanel hidden">
+    <div class="filters">
+      <div>
+        <label>Categoria</label>
+        <div class="multiselect" id="fCategoriaManutWrap">
+          <button type="button" class="multiselect-btn" id="fCategoriaManutBtn" onclick="toggleMultiselect(event,'fCategoriaManutPanel')">Todas</button>
+          <div class="multiselect-panel" id="fCategoriaManutPanel"></div>
+        </div>
+      </div>
+      <div>
+        <label>Unidade</label>
+        <select id="fUnidadeManut">
+          <option value="">Ambas</option>
+          <option value="CLE">Clementina</option>
+          <option value="QRZ">Queiroz</option>
+        </select>
+      </div>
+      <div>
+        <label>Status (semana mais recente)</label>
+        <select id="fStatusManut">
+          <option value="">Todos</option>
+          <option value="ok">Meta atingida</option>
+          <option value="bad">Atenção (abaixo da meta)</option>
+        </select>
+      </div>
+      <button class="reset" onclick="resetFiltersManutencao()">Limpar Filtros</button>
+    </div>
+
+    <div class="note">Indicador de <strong>Cumprimento de Manutenção Preventiva</strong> (meta: 95%) por semana (S18 a S35), para Caminhões, Carretas, Pit Stop e Equipamentos Agrícolas — cada um comparando <strong>Clementina</strong> (CLE) e <strong>Queiroz</strong> (QRZ). As barras ficam <strong style="color:#1e8449">verde escuro (Clementina)</strong> / <strong style="color:#82e0aa">verde claro (Queiroz)</strong> quando dentro/acima da meta, e <strong style="color:#a93226">vermelho escuro (Clementina)</strong> / <strong style="color:#f1948a">vermelho claro (Queiroz)</strong> quando abaixo — e a linha tracejada <strong style="color:var(--warn)">laranja</strong> mostra a meta, com o valor na legenda. Maior valor é sempre melhor nesta aba. Use o filtro de Unidade para isolar Clementina ou Queiroz.</div>
+
+    <div class="kpis" id="kpiRowManut"></div>
+
+    <div id="secoesManut"></div>
+
+    <div class="section-title">Detalhamento de todos os indicadores</div>
+    <div class="card wide">
+      <h3>Todos os registros (por categoria, indicador, unidade e semana)</h3>
+      <div class="table-scroll">
+        <table id="tblDetManut">
+          <thead><tr><th>Categoria</th><th>Indicador</th><th>Unidade</th><th>Semana</th><th>Valor</th><th>Meta</th><th>Status</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -203,6 +253,18 @@ function statusColor(valor, meta, lowerIsBetter){
   if(ok===null) return 'rgba(0,0,0,0)';
   return ok ? getComputedStyle(document.body).getPropertyValue('--success').trim() || '#00b894'
              : getComputedStyle(document.body).getPropertyValue('--danger').trim() || '#e74c3c';
+}
+// Cor por status (verde=meta atingida / vermelho=abaixo da meta), com tom diferente
+// por unidade: CLE (Clementina) em tom escuro, QRZ (Queiroz) em tom claro.
+const corStatusPorUnidade = {
+  CLE: { ok:'#1e8449', bad:'#a93226' },
+  QRZ: { ok:'#82e0aa', bad:'#f1948a' },
+};
+function statusColorUnidade(unidade, valor, meta, lowerIsBetter){
+  const ok = atingiuMeta(valor, meta, lowerIsBetter);
+  if(ok===null) return 'rgba(0,0,0,0)';
+  const paleta = corStatusPorUnidade[unidade] || corStatusPorUnidade.CLE;
+  return ok ? paleta.ok : paleta.bad;
 }
 function fmtValor(v, unidade){
   if(v===null || v===undefined) return '-';
@@ -231,7 +293,7 @@ const valueLabelPlugin = {
   afterDatasetsDraw(chart){
     const {ctx} = chart;
     chart.data.datasets.forEach((ds, dsIndex)=>{
-      if(ds.type !== 'bar') return;
+      if(ds.type !== 'bar' || ds._skipLabel) return;
       const meta = chart.getDatasetMeta(dsIndex);
       meta.data.forEach((bar, idx)=>{
         const val = ds.data[idx];
@@ -266,14 +328,17 @@ document.getElementById('lastUpdate').textContent = 'Atualizado em ' + new Date(
 // ============================================================
 const chartsAgro = {};
 const chartsInd = {};
+const chartsManut = {};
 
 function switchTab(tab){
   document.getElementById('tabBtnAgricola').classList.toggle('active', tab==='agricola');
   document.getElementById('tabBtnIndustria').classList.toggle('active', tab==='industria');
+  document.getElementById('tabBtnManutencao').classList.toggle('active', tab==='manutencao');
   document.getElementById('panel-agricola').classList.toggle('hidden', tab!=='agricola');
   document.getElementById('panel-industria').classList.toggle('hidden', tab!=='industria');
+  document.getElementById('panel-manutencao').classList.toggle('hidden', tab!=='manutencao');
   requestAnimationFrame(()=>{
-    const reg = tab==='agricola' ? chartsAgro : chartsInd;
+    const reg = tab==='agricola' ? chartsAgro : (tab==='industria' ? chartsInd : chartsManut);
     Object.values(reg).forEach(c=>c.resize());
   });
 }
@@ -284,138 +349,138 @@ function switchTab(tab){
 // ==DADOS_AGRICOLA_START==
 const grupos = [
   { id:'colheita_op', categoria:'Colheita', nome:'Eficiência Operacional Colheita', unidade:'%', lowerIsBetter:false,
-    series:["CLE", "QRZ"],
+    series:['CLE','QRZ'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.814, QRZ:0.81}, meta:0.76},
-      {periodo:"SEMANA", valores:{CLE:0.815, QRZ:0.827}, meta:0.76},
-      {periodo:"MÊS", valores:{CLE:0.805, QRZ:0.821}, meta:0.76},
-      {periodo:"ACUMULADO", valores:{CLE:0.807, QRZ:0.821}, meta:0.76},
+      {periodo:'SF 25/26', valores:{CLE:0.814, QRZ:0.81}, meta:0.76},
+      {periodo:'SEMANA', valores:{CLE:0.801, QRZ:0.813}, meta:0.76},
+      {periodo:'MÊS', valores:{CLE:0.796, QRZ:0.808}, meta:0.76},
+      {periodo:'ACUMULADO', valores:{CLE:0.807, QRZ:0.82}, meta:0.76},
     ]},
   { id:'colheita_motor', categoria:'Colheita', nome:'Eficiência Motor Colheita', unidade:'%', lowerIsBetter:false,
-    series:["CLE", "QRZ"],
+    series:['CLE','QRZ'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.915, QRZ:0.918}, meta:0.9},
-      {periodo:"SEMANA", valores:{CLE:0.916, QRZ:0.926}, meta:0.9},
-      {periodo:"MÊS", valores:{CLE:0.919, QRZ:0.867}, meta:0.9},
-      {periodo:"ACUMULADO", valores:{CLE:0.916, QRZ:0.922}, meta:0.9},
+      {periodo:'SF 25/26', valores:{CLE:0.915, QRZ:0.918}, meta:0.90},
+      {periodo:'SEMANA', valores:{CLE:0.916, QRZ:0.911}, meta:0.90},
+      {periodo:'MÊS', valores:{CLE:0.915, QRZ:0.916}, meta:0.90},
+      {periodo:'ACUMULADO', valores:{CLE:0.916, QRZ:0.922}, meta:0.90},
     ]},
   { id:'transporte', categoria:'Transporte', nome:'Eficiência Operacional Transporte', unidade:'%', lowerIsBetter:false,
-    series:["CLE", "QRZ"],
+    series:['CLE','QRZ'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.849, QRZ:0.836}, meta:0.85},
-      {periodo:"SEMANA", valores:{CLE:0.8877, QRZ:0.8971}, meta:0.85},
-      {periodo:"MÊS", valores:{CLE:0.866, QRZ:0.891}, meta:0.85},
-      {periodo:"ACUMULADO", valores:{CLE:0.871, QRZ:0.8827}, meta:0.85},
+      {periodo:'SF 25/26', valores:{CLE:0.849, QRZ:0.836}, meta:0.85},
+      {periodo:'SEMANA', valores:{CLE:0.8394, QRZ:0.893}, meta:0.85},
+      {periodo:'MÊS', valores:{CLE:0.8438, QRZ:0.8902}, meta:0.85},
+      {periodo:'ACUMULADO', valores:{CLE:0.869, QRZ:0.881}, meta:0.85},
     ]},
   { id:'vinhaca_op', categoria:'Vinhaça Localizada', nome:'Eficiência Operacional Vinhaça Localizada', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.6245}, meta:0.76},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.871}, meta:0.76},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.864}, meta:0.76},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.854}, meta:0.76},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.6245}, meta:0.76},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.8538}, meta:0.76},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.8559}, meta:0.76},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.8774}, meta:0.76},
     ]},
   { id:'vinhaca_motor', categoria:'Vinhaça Localizada', nome:'Eficiência Motor Vinhaça Localizada', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.895}, meta:0.9},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.968}, meta:0.9},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.967}, meta:0.9},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.958}, meta:0.9},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.895}, meta:0.90},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.9254}, meta:0.90},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.9067}, meta:0.90},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.905}, meta:0.90},
     ]},
   { id:'rodovinhaca', categoria:'Rodovinhaça', nome:'Eficiência Operacional Rodovinhaça', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.703}, meta:0.85},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.9062}, meta:0.85},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.927}, meta:0.85},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.8914}, meta:0.85},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.703}, meta:0.85},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.9362}, meta:0.85},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.9355}, meta:0.85},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.8878}, meta:0.85},
     ]},
   { id:'plantio_op_f1', categoria:'Plantio', nome:'Eficiência Operacional Plantio — F1', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.481}, meta:0.5},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.4881}, meta:0.5},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.4981}, meta:0.5},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.481}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.4881}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.4981}, meta:0.50},
     ]},
   { id:'plantio_motor_f1', categoria:'Plantio', nome:'Eficiência Motor Plantio — F1', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.6311}, meta:0.4},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.581}, meta:0.4},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.5951}, meta:0.4},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.6311}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.581}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5951}, meta:0.40},
     ]},
   { id:'plantio_op_f2', categoria:'Plantio', nome:'Eficiência Operacional Plantio — F2', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.4505}, meta:0.5},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.4705}, meta:0.5},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.466}, meta:0.5},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.4505}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.4705}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.466}, meta:0.50},
     ]},
   { id:'plantio_motor_f2', categoria:'Plantio', nome:'Eficiência Motor Plantio — F2', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0.5404}, meta:0.4},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0.537}, meta:0.4},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.5362}, meta:0.4},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0.5404}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0.537}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5362}, meta:0.40},
     ]},
   { id:'plantio_op_media', categoria:'Plantio', nome:'Eficiência Operacional Plantio — Média Geral', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0}, meta:0.5},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0}, meta:0.5},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.5684}, meta:0.5},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.50},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0}, meta:0.50},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0}, meta:0.50},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.5684}, meta:0.50},
     ]},
   { id:'plantio_motor_media', categoria:'Plantio', nome:'Eficiência Motor Plantio — Média Geral', unidade:'%', lowerIsBetter:false,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:null}, meta:null},
-      {periodo:"SEMANA", valores:{CONSOLIDADO:0}, meta:0.4},
-      {periodo:"MÊS", valores:{CONSOLIDADO:0}, meta:0.4},
-      {periodo:"ACUMULADO", valores:{CONSOLIDADO:0.6137}, meta:0.4},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:null}, meta:0.40},
+      {periodo:'SEMANA', valores:{CONSOLIDADO:0}, meta:0.40},
+      {periodo:'MÊS', valores:{CONSOLIDADO:0}, meta:0.40},
+      {periodo:'ACUMULADO', valores:{CONSOLIDADO:0.6137}, meta:0.40},
     ]},
   { id:'manobra', categoria:'Frota e Consumo', nome:'Tempo de Manobra', unidade:'h', lowerIsBetter:true,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 21/22", valores:{CONSOLIDADO:2.93}, meta:1.2},
-      {periodo:"SF 23/24", valores:{CONSOLIDADO:0.55}, meta:1.2},
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.55}, meta:1.2},
-      {periodo:"SF 26/27", valores:{CONSOLIDADO:0.5}, meta:1.2},
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:2.93}, meta:1.2},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:0.55}, meta:1.2},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.55}, meta:1.2},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.5}, meta:1.2},
     ]},
   { id:'consumo_canavieiro', categoria:'Frota e Consumo', nome:'Redução de Consumo Canavieiro', unidade:'L/TON', lowerIsBetter:true,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 21/22", valores:{CONSOLIDADO:1.15}, meta:1},
-      {periodo:"SF 23/24", valores:{CONSOLIDADO:1.05}, meta:1},
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:1}, meta:1},
-      {periodo:"SF 26/27", valores:{CONSOLIDADO:0.84}, meta:1},
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:1.15}, meta:1.0},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:1.05}, meta:1.0},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:1.0}, meta:1.0},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.84}, meta:1.0},
     ]},
   { id:'pneus', categoria:'Frota e Consumo', nome:'Otimização de Pneus', unidade:'%', lowerIsBetter:true,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 21/22", valores:{CONSOLIDADO:0.4318}, meta:0.38},
-      {periodo:"SF 23/24", valores:{CONSOLIDADO:0.29}, meta:0.38},
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.29}, meta:0.38},
-      {periodo:"SF 26/27", valores:{CONSOLIDADO:0.28}, meta:0.38},
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:0.4318}, meta:0.38},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:0.29}, meta:0.38},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.29}, meta:0.38},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.28}, meta:0.38},
     ]},
   { id:'consumo_colhedora', categoria:'Frota e Consumo', nome:'Redução de Consumo Colhedora', unidade:'L/TON', lowerIsBetter:true,
-    series:["CONSOLIDADO"],
+    series:['CONSOLIDADO'],
     periodos:[
-      {periodo:"SF 21/22", valores:{CONSOLIDADO:1.2}, meta:1},
-      {periodo:"SF 23/24", valores:{CONSOLIDADO:1.05}, meta:1},
-      {periodo:"SF 25/26", valores:{CONSOLIDADO:0.92}, meta:1},
-      {periodo:"SF 26/27", valores:{CONSOLIDADO:0.89}, meta:1},
+      {periodo:'SF 21/22', valores:{CONSOLIDADO:1.2}, meta:1.0},
+      {periodo:'SF 23/24', valores:{CONSOLIDADO:1.05}, meta:1.0},
+      {periodo:'SF 25/26', valores:{CONSOLIDADO:0.92}, meta:1.0},
+      {periodo:'SF 26/27', valores:{CONSOLIDADO:0.89}, meta:1.0},
     ]},
   { id:'patio', categoria:'Pátio', nome:'Tempo de Pátio Canavieiro', unidade:'min', lowerIsBetter:true,
-    series:["TEMPO"],
+    series:['TEMPO'],
     periodos:[
-      {periodo:"SF 25/26", valores:{TEMPO:45}, meta:35},
-      {periodo:"SF 26/27", valores:{TEMPO:10}, meta:15},
+      {periodo:'SF 25/26', valores:{TEMPO:45}, meta:35},
+      {periodo:'SF 26/27', valores:{TEMPO:10}, meta:15},
     ]},
 ];
 // ==DADOS_AGRICOLA_END==
@@ -560,12 +625,11 @@ function renderAgricola(){
     gruposCat.forEach(g=>{
       const canvasId = 'chart_'+g.id;
       const labels = g.periodos.map(p=>p.periodo);
-      const corFixaPorSerie = { CLE:'#1e8449', QRZ:'#82e0aa' };
-      const usaCorFixa = g.series.length > 1 && g.series.every(s=>corFixaPorSerie[s]);
+      const temDuasSeries = g.series.length > 1 && g.series.every(s=>corStatusPorUnidade[s]);
       const datasets = g.series.map((serie, idx)=>{
         const data = g.periodos.map(p=> (p.valores[serie]===null || p.valores[serie]===undefined) ? null : p.valores[serie]);
-        const colors = usaCorFixa
-          ? g.periodos.map(()=> corFixaPorSerie[serie])
+        const colors = temDuasSeries
+          ? g.periodos.map(p=> statusColorUnidade(serie, p.valores[serie], p.meta, g.lowerIsBetter))
           : g.periodos.map(p=> statusColor(p.valores[serie], p.meta, g.lowerIsBetter));
         return {
           type:'bar',
@@ -649,66 +713,66 @@ function renderAgricola(){
 const gruposIndustria = [
   { id:'extracao_art', categoria:'Extração e Fermentação', nome:'Extração ART', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.9624, QRZ:0.9504}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.9605, QRZ:0.9539}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9623, QRZ:0.9537}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9621, QRZ:0.9516}, metaMes:{CLE:0.9619, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:0.9624, QRZ:0.9504}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9628, QRZ:0.9539}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9626, QRZ:0.9537}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9621, QRZ:0.9516}, metaMes:{CLE:0.9634, QRZ:0.9476}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_destilacao', categoria:'Extração e Fermentação', nome:'Eficiência Destilação', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.9953, QRZ:0.9979}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.9969, QRZ:0.9976}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9929, QRZ:0.9986}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9925, QRZ:0.9969}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:0.9953, QRZ:0.9979}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9974, QRZ:0.9992}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9918, QRZ:0.9992}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9924, QRZ:0.9968}, metaMes:{CLE:0.9933, QRZ:0.997}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_fermentacao', categoria:'Extração e Fermentação', nome:'Eficiência Fermentação', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.8985, QRZ:0.9025}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.8617, QRZ:0.8606}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9172, QRZ:0.8701}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9009, QRZ:0.8904}, metaMes:{CLE:0.8934, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:0.8985, QRZ:0.9025}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9014, QRZ:0.8801}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9174, QRZ:0.8767}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9042, QRZ:0.8929}, metaMes:{CLE:0.8825, QRZ:0.882}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_perda_aspersor', categoria:'Perdas de Processo', nome:'Perda Aspersor', unidade:'%', lowerIsBetter:true,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.00993, QRZ:0.01218}, metaMes:{CLE:0.005, QRZ:0.0036}, metaCons:{CLE:0.005, QRZ:0.005}},
-      {periodo:"SEMANA", valores:{CLE:0.00625, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.005, QRZ:0.005}},
-      {periodo:"MÊS", valores:{CLE:0.0129, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.005, QRZ:0.005}},
-      {periodo:"ACUMULADO", valores:{CLE:0.0071, QRZ:0.005}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.005, QRZ:0.005}},
+      {periodo:'SF 25/26', valores:{CLE:0.00993, QRZ:0.01218}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'SEMANA', valores:{CLE:0.012, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'MÊS', valores:{CLE:0.022, QRZ:0.002}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
+      {periodo:'ACUMULADO', valores:{CLE:0.007, QRZ:0.005}, metaMes:{CLE:0.005, QRZ:0.0035}, metaCons:{CLE:0.006, QRZ:0.005}},
     ]},
   { id:'ind_perda_residuaria', categoria:'Perdas de Processo', nome:'Perda Residuária', unidade:'%', lowerIsBetter:true,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.0067, QRZ:0.0058}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
-      {periodo:"SEMANA", valores:{CLE:0.00753, QRZ:0.0027}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
-      {periodo:"MÊS", valores:{CLE:0.00738, QRZ:0.0031}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
-      {periodo:"ACUMULADO", valores:{CLE:0.0066, QRZ:0.007}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'SF 25/26', valores:{CLE:0.0067, QRZ:0.0058}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'SEMANA', valores:{CLE:0.007, QRZ:0.0023}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'MÊS', valores:{CLE:0.007, QRZ:0.002}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
+      {periodo:'ACUMULADO', valores:{CLE:0.006, QRZ:0.008}, metaMes:{CLE:0.0023, QRZ:0.005}, metaCons:{CLE:0.004, QRZ:0.006}},
     ]},
   { id:'ind_ad_ph', categoria:'Água de Diluição (AD)', nome:'AD. Controle de PH', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.7658, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.8868, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.8772, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.9978, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9209, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.8957, QRZ:null}, metaMes:{CLE:0.9, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_pol_torta', categoria:'Perdas de Processo', nome:'Pol da Torta', unidade:'%', lowerIsBetter:true,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:0.0196, QRZ:0.0471}, metaMes:{CLE:0.0228, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.0173, QRZ:0.0359}, metaMes:{CLE:0.0228, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.0208, QRZ:0.0368}, metaMes:{CLE:0.0228, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.0215, QRZ:0.0337}, metaMes:{CLE:0.0228, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:0.0196, QRZ:0.0471}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.021, QRZ:0.033}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.021, QRZ:0.0323}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.0216, QRZ:0.0327}, metaMes:{CLE:0.0262, QRZ:0.0272}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_ad_pressao21', categoria:'Água de Diluição (AD)', nome:'AD. Pressão de 21', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.9558, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:0.9707, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:0.9714, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:0.968, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9735, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.968, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
     ]},
   { id:'ind_ad_temp21', categoria:'Água de Diluição (AD)', nome:'AD. Temperatura do 21', unidade:'%', lowerIsBetter:false,
     periodos:[
-      {periodo:"SF 25/26", valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"SEMANA", valores:{CLE:0.983, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"MÊS", valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
-      {periodo:"ACUMULADO", valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SF 25/26', valores:{CLE:null, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'SEMANA', valores:{CLE:1, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'MÊS', valores:{CLE:0.9951, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
+      {periodo:'ACUMULADO', valores:{CLE:0.9877, QRZ:null}, metaMes:{CLE:0.95, QRZ:0.95}, metaCons:{CLE:null, QRZ:null}},
     ]},
 ];
 // ==DADOS_INDUSTRIA_END==
@@ -913,8 +977,7 @@ function renderIndustria(){
 
       unidadesToShow.forEach(u=>{
         const data = g.periodos.map(p=> (p.valores[u]===null || p.valores[u]===undefined) ? null : p.valores[u]);
-        const corFixaPorUnidade = { CLE:'#1e8449', QRZ:'#82e0aa' };
-        const colors = g.periodos.map(()=> corFixaPorUnidade[u]);
+        const colors = g.periodos.map(p=> statusColorUnidade(u, p.valores[u], metaAplicada(p,u), g.lowerIsBetter));
         datasets.push({
           type:'bar',
           label: nomeUnidade[u],
@@ -979,6 +1042,329 @@ function renderIndustria(){
   }).join('');
 }
 
+
+// ============================================================
+// DADOS — MANUTENÇÃO (Manutenção.xlsx / aba AUTOMOTIVA)
+// Cumprimento de Manutenção Preventiva por semana (S18–S35)
+// CLE = Clementina · QRZ = Queiroz · meta 95% · maior é melhor
+// ============================================================
+// ==DADOS_MANUTENCAO_START==
+const gruposManutencao = [
+  { id:'manut_caminhoes', categoria:'Veículos Rodoviários', nome:'Caminhões — Cumprimento de Manutenção Preventiva', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:"S18", valores:{CLE:0.54, QRZ:0.29}, meta:0.95},
+      {periodo:"S19", valores:{CLE:0.36, QRZ:0.14}, meta:0.95},
+      {periodo:"S20", valores:{CLE:0.93, QRZ:0.11}, meta:0.95},
+      {periodo:"S21", valores:{CLE:0.44, QRZ:0.5}, meta:0.95},
+      {periodo:"S22", valores:{CLE:1, QRZ:0.78}, meta:0.95},
+      {periodo:"S23", valores:{CLE:0.93, QRZ:0.89}, meta:0.95},
+      {periodo:"S24", valores:{CLE:1, QRZ:0.6}, meta:0.95},
+      {periodo:"S25", valores:{CLE:1, QRZ:0.5}, meta:0.95},
+      {periodo:"S26", valores:{CLE:1, QRZ:0.9}, meta:0.95},
+      {periodo:"S27", valores:{CLE:0, QRZ:0}, meta:0.95},
+      {periodo:"S28", valores:{CLE:0.86, QRZ:1}, meta:0.95},
+      {periodo:"S29", valores:{CLE:0.55, QRZ:0.7}, meta:0.95},
+      {periodo:"S30", valores:{CLE:0.83, QRZ:0.77}, meta:0.95},
+      {periodo:"S31", valores:{CLE:0.83, QRZ:0.92}, meta:0.95},
+      {periodo:"S32", valores:{CLE:1, QRZ:1}, meta:0.95},
+      {periodo:"S33", valores:{CLE:1, QRZ:0.73}, meta:0.95},
+      {periodo:"S34", valores:{CLE:0.82, QRZ:0.63}, meta:0.95},
+      {periodo:"S35", valores:{CLE:0.88, QRZ:0.79}, meta:0.95},
+    ]},
+  { id:'manut_carretas', categoria:'Veículos Rodoviários', nome:'Carretas — Cumprimento de Manutenção Preventiva', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:"S18", valores:{CLE:0.96, QRZ:0.18}, meta:0.95},
+      {periodo:"S19", valores:{CLE:0.65, QRZ:0.25}, meta:0.95},
+      {periodo:"S20", valores:{CLE:0.92, QRZ:0.51}, meta:0.95},
+      {periodo:"S21", valores:{CLE:1, QRZ:0.63}, meta:0.95},
+      {periodo:"S22", valores:{CLE:0.87, QRZ:0.97}, meta:0.95},
+      {periodo:"S23", valores:{CLE:0.89, QRZ:0.97}, meta:0.95},
+      {periodo:"S24", valores:{CLE:0.82, QRZ:0.58}, meta:0.95},
+      {periodo:"S25", valores:{CLE:0.94, QRZ:0.73}, meta:0.95},
+      {periodo:"S26", valores:{CLE:1, QRZ:0.72}, meta:0.95},
+      {periodo:"S27", valores:{CLE:0, QRZ:0}, meta:0.95},
+      {periodo:"S28", valores:{CLE:0.92, QRZ:0.78}, meta:0.95},
+      {periodo:"S29", valores:{CLE:0.7, QRZ:0.29}, meta:0.95},
+      {periodo:"S30", valores:{CLE:0.77, QRZ:0.53}, meta:0.95},
+      {periodo:"S31", valores:{CLE:0.91, QRZ:0.65}, meta:0.95},
+      {periodo:"S32", valores:{CLE:0.92, QRZ:0.73}, meta:0.95},
+      {periodo:"S33", valores:{CLE:1, QRZ:0.8}, meta:0.95},
+      {periodo:"S34", valores:{CLE:0.96, QRZ:0.76}, meta:0.95},
+      {periodo:"S35", valores:{CLE:1, QRZ:0.78}, meta:0.95},
+    ]},
+  { id:'manut_pitstop', categoria:'Veículos Rodoviários', nome:'Pit Stop — Cumprimento de Manutenção Preventiva', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:"S18", valores:{CLE:0, QRZ:1}, meta:0.95},
+      {periodo:"S19", valores:{CLE:0.75, QRZ:0.93}, meta:0.95},
+      {periodo:"S20", valores:{CLE:1, QRZ:0.9}, meta:0.95},
+      {periodo:"S21", valores:{CLE:1, QRZ:0.96}, meta:0.95},
+      {periodo:"S22", valores:{CLE:1, QRZ:0.96}, meta:0.95},
+      {periodo:"S23", valores:{CLE:0.92, QRZ:0.92}, meta:0.95},
+      {periodo:"S24", valores:{CLE:0.38, QRZ:0.96}, meta:0.95},
+      {periodo:"S25", valores:{CLE:1, QRZ:0.95}, meta:0.95},
+      {periodo:"S26", valores:{CLE:0.9, QRZ:1}, meta:0.95},
+      {periodo:"S27", valores:{CLE:0, QRZ:0}, meta:0.95},
+      {periodo:"S28", valores:{CLE:0.95, QRZ:1}, meta:0.95},
+      {periodo:"S29", valores:{CLE:0.88, QRZ:1}, meta:0.95},
+      {periodo:"S30", valores:{CLE:1, QRZ:0.99}, meta:0.95},
+      {periodo:"S31", valores:{CLE:1, QRZ:1}, meta:0.95},
+      {periodo:"S32", valores:{CLE:1, QRZ:1}, meta:0.95},
+      {periodo:"S33", valores:{CLE:1, QRZ:0.97}, meta:0.95},
+      {periodo:"S34", valores:{CLE:0.95, QRZ:0.84}, meta:0.95},
+      {periodo:"S35", valores:{CLE:1, QRZ:1}, meta:0.95},
+    ]},
+  { id:'manut_frota_agricola', categoria:'Equipamentos Agrícolas', nome:'Equipamentos Agrícolas — Cumprimento de Manutenção Preventiva', unidade:'%', lowerIsBetter:false,
+    series:['CLE','QRZ'],
+    periodos:[
+      {periodo:"S18", valores:{CLE:0.49, QRZ:0.58}, meta:0.95},
+      {periodo:"S19", valores:{CLE:0.7, QRZ:0.73}, meta:0.95},
+      {periodo:"S20", valores:{CLE:0.75, QRZ:0.68}, meta:0.95},
+      {periodo:"S21", valores:{CLE:0.45, QRZ:0.58}, meta:0.95},
+      {periodo:"S22", valores:{CLE:0.82, QRZ:0.77}, meta:0.95},
+      {periodo:"S23", valores:{CLE:0.85, QRZ:0.81}, meta:0.95},
+      {periodo:"S24", valores:{CLE:0.61, QRZ:0.55}, meta:0.95},
+      {periodo:"S25", valores:{CLE:0.89, QRZ:0.59}, meta:0.95},
+      {periodo:"S26", valores:{CLE:0.8, QRZ:0.83}, meta:0.95},
+      {periodo:"S27", valores:{CLE:0, QRZ:0}, meta:0.95},
+      {periodo:"S28", valores:{CLE:0.76, QRZ:0.76}, meta:0.95},
+      {periodo:"S29", valores:{CLE:0.88, QRZ:0.89}, meta:0.95},
+      {periodo:"S30", valores:{CLE:0.81, QRZ:0.78}, meta:0.95},
+      {periodo:"S31", valores:{CLE:1, QRZ:0.75}, meta:0.95},
+      {periodo:"S32", valores:{CLE:0.78, QRZ:0.78}, meta:0.95},
+      {periodo:"S33", valores:{CLE:1, QRZ:0.74}, meta:0.95},
+      {periodo:"S34", valores:{CLE:0.92, QRZ:0.8}, meta:0.95},
+      {periodo:"S35", valores:{CLE:0.93, QRZ:0.98}, meta:0.95},
+    ]},
+];
+// ==DADOS_MANUTENCAO_END==
+
+// ---- Filtro de Categoria (multiselect) — Manutenção ----
+const categoriasManut = [...new Set(gruposManutencao.map(g=>g.categoria))];
+const categoriaManutSelected = new Set();
+
+function buildCategoriaManutPanel(){
+  const panel = document.getElementById('fCategoriaManutPanel');
+  panel.innerHTML = `
+    <div class="ms-actions">
+      <a onclick="selectAllCategoriaManut(event)">Selecionar todas</a>
+      <a onclick="clearCategoriaManut(event)">Limpar</a>
+    </div>
+    ${categoriasManut.map(c => `
+      <label>
+        <input type="checkbox" value="${c}" onchange="onCategoriaManutChange(event)">
+        ${c}
+      </label>`).join('')}
+  `;
+}
+function updateCategoriaManutBtnLabel(){
+  const btn = document.getElementById('fCategoriaManutBtn');
+  const n = categoriaManutSelected.size;
+  if(n === 0) btn.textContent = 'Todas';
+  else if(n <= 2) btn.textContent = [...categoriaManutSelected].join(', ');
+  else btn.textContent = `${n} selecionadas`;
+}
+function onCategoriaManutChange(e){
+  const v = e.target.value;
+  if(e.target.checked) categoriaManutSelected.add(v); else categoriaManutSelected.delete(v);
+  updateCategoriaManutBtnLabel();
+  renderManutencao();
+}
+function selectAllCategoriaManut(e){
+  e.preventDefault(); e.stopPropagation();
+  categoriasManut.forEach(v=>categoriaManutSelected.add(v));
+  document.querySelectorAll('#fCategoriaManutPanel input[type=checkbox]').forEach(cb=>cb.checked=true);
+  updateCategoriaManutBtnLabel(); renderManutencao();
+}
+function clearCategoriaManut(e){
+  e.preventDefault(); e.stopPropagation();
+  categoriaManutSelected.clear();
+  document.querySelectorAll('#fCategoriaManutPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaManutBtnLabel(); renderManutencao();
+}
+buildCategoriaManutPanel();
+
+document.getElementById('fUnidadeManut').addEventListener('change', renderManutencao);
+document.getElementById('fStatusManut').addEventListener('change', renderManutencao);
+
+function resetFiltersManutencao(){
+  categoriaManutSelected.clear();
+  document.querySelectorAll('#fCategoriaManutPanel input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateCategoriaManutBtnLabel();
+  document.getElementById('fUnidadeManut').value='';
+  document.getElementById('fStatusManut').value='';
+  renderManutencao();
+}
+
+function grupoStatusManut(grupo){
+  let temDado=false, algumaFora=false;
+  grupo.series.forEach(s=>{
+    const p = ultimoPeriodoComValor(grupo, s);
+    if(p){
+      temDado=true;
+      const ok = atingiuMeta(p.valores[s], p.meta, grupo.lowerIsBetter);
+      if(ok===false) algumaFora=true;
+    }
+  });
+  if(!temDado) return null;
+  return algumaFora ? 'bad' : 'ok';
+}
+
+function getFilteredManutencao(){
+  const fStatus = document.getElementById('fStatusManut').value;
+  return gruposManutencao.filter(g=>{
+    if(categoriaManutSelected.size>0 && !categoriaManutSelected.has(g.categoria)) return false;
+    if(fStatus){
+      const st = grupoStatusManut(g);
+      if(st!==fStatus) return false;
+    }
+    return true;
+  });
+}
+
+// ---- Render Manutenção ----
+function renderManutencao(){
+  const filtered = getFilteredManutencao();
+  const tc = getThemeColors();
+  const unidadeFiltro = document.getElementById('fUnidadeManut').value;
+  const unidadesToShow = unidadeFiltro ? [unidadeFiltro] : ['CLE','QRZ'];
+
+  let totalSeries=0, acima=0, abaixo=0, somaAting=0, countAting=0;
+  gruposManutencao.forEach(g=>{
+    g.series.forEach(s=>{
+      const p = ultimoPeriodoComValor(g, s);
+      if(p){
+        totalSeries++;
+        const ok = atingiuMeta(p.valores[s], p.meta, g.lowerIsBetter);
+        if(ok) acima++; else abaixo++;
+        const ratio = p.valores[s] / p.meta;
+        somaAting += ratio; countAting++;
+      }
+    });
+  });
+  const pctAting = countAting ? ((somaAting/countAting)*100).toFixed(0)+'%' : '-';
+
+  document.getElementById('kpiRowManut').innerHTML = `
+    <div class="kpi blue"><div class="val">${categoriasManut.length}</div><div class="lbl">Categorias monitoradas</div></div>
+    <div class="kpi"><div class="val">${totalSeries}</div><div class="lbl">Indicadores acompanhados</div></div>
+    <div class="kpi success"><div class="val">${acima}</div><div class="lbl">Dentro/Acima da meta (última semana)</div></div>
+    <div class="kpi danger"><div class="val">${abaixo}</div><div class="lbl">Abaixo da meta (última semana)</div></div>
+    <div class="kpi warn"><div class="val">${pctAting}</div><div class="lbl">Atingimento médio da meta</div></div>
+  `;
+
+  const secoesEl = document.getElementById('secoesManut');
+  secoesEl.innerHTML = '';
+  Object.keys(chartsManut).forEach(k=>destroyChart(chartsManut,k));
+
+  const porCategoria = {};
+  filtered.forEach(g=>{ (porCategoria[g.categoria] = porCategoria[g.categoria]||[]).push(g); });
+
+  categoriasManut.forEach(cat=>{
+    const gruposCat = porCategoria[cat];
+    if(!gruposCat || !gruposCat.length) return;
+
+    const secTitle = document.createElement('div');
+    secTitle.className = 'section-title';
+    secTitle.textContent = cat;
+    secoesEl.appendChild(secTitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    secoesEl.appendChild(grid);
+
+    gruposCat.forEach(g=>{
+      const card = document.createElement('div');
+      card.className = 'card wide';
+      const canvasId = 'chartManut_'+g.id;
+      card.innerHTML = `<h3>${g.nome}</h3><div class="card-sub">Unidade: ${g.unidade} · Semanas: S18–S35 · maior é melhor</div><div class="chart-wrap tall"><canvas id="${canvasId}"></canvas></div>`;
+      grid.appendChild(card);
+    });
+
+    gruposCat.forEach(g=>{
+      const canvasId = 'chartManut_'+g.id;
+      const labels = g.periodos.map(p=>p.periodo);
+      const datasets = [];
+
+      unidadesToShow.forEach(u=>{
+        const data = g.periodos.map(p=> (p.valores[u]===null || p.valores[u]===undefined) ? null : p.valores[u]);
+        const colors = g.periodos.map(p=> statusColorUnidade(u, p.valores[u], p.meta, g.lowerIsBetter));
+        datasets.push({
+          type:'bar',
+          label: nomeUnidade[u],
+          data,
+          backgroundColor: colors,
+          borderRadius:3,
+          maxBarThickness:22,
+          _fmt:(v)=>fmtValor(v, g.unidade),
+          _labelColor: tc.text,
+          _skipLabel: true,
+        });
+      });
+
+      const metaRef = g.periodos.find(p=> p.meta!==null && p.meta!==undefined);
+      const metaLabel = metaRef ? `Meta (${fmtValor(metaRef.meta, g.unidade)})` : 'Meta';
+      datasets.push({
+        type:'line',
+        label: metaLabel,
+        data: g.periodos.map(p=>p.meta),
+        borderColor:'#f39c12',
+        backgroundColor:'#f39c12',
+        borderDash:[6,4],
+        borderWidth:2,
+        pointRadius:0,
+        fill:false,
+        tension:0,
+      });
+
+      destroyChart(chartsManut, g.id);
+      chartsManut[g.id] = new Chart(document.getElementById(canvasId), {
+        type:'bar',
+        data:{labels, datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          layout:{padding:{top:10}},
+          plugins:{
+            legend:{position:'bottom', labels:{color:tc.text, boxWidth:14, padding:12}},
+            tooltip:{callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${fmtValor(ctx.raw, g.unidade)}` }}
+          },
+          scales:{
+            x:{ticks:{color:tc.text, maxRotation:0, autoSkip:true, maxTicksLimit:18}, grid:{display:false}},
+            y:{ticks:{color:tc.text, callback:(v)=> g.unidade==='%' ? (v*100).toFixed(0)+'%' : v}, grid:{color:tc.grid}, beginAtZero:true, max:1.05}
+          }
+        }
+      });
+    });
+  });
+
+  const linhas = [];
+  filtered.forEach(g=>{
+    unidadesToShow.forEach(u=>{
+      g.periodos.forEach(p=>{
+        const v = p.valores[u];
+        const ok = atingiuMeta(v, p.meta, g.lowerIsBetter);
+        linhas.push({categoria:g.categoria, indicador:g.nome, unidade:nomeUnidade[u], periodo:p.periodo, valor:v, meta:p.meta, unidadeMedida:g.unidade, status:ok});
+      });
+    });
+  });
+  const tbManut = document.querySelector('#tblDetManut tbody');
+  tbManut.innerHTML = linhas.map(l=>{
+    let badge = '<span class="badge na">Sem dado</span>';
+    if(l.status===true) badge = '<span class="badge ok">Acima/Meta</span>';
+    else if(l.status===false) badge = '<span class="badge bad">Abaixo da Meta</span>';
+    return `<tr>
+      <td>${l.categoria}</td>
+      <td>${l.indicador}</td>
+      <td>${l.unidade}</td>
+      <td>${l.periodo}</td>
+      <td>${fmtValor(l.valor, l.unidadeMedida)}</td>
+      <td>${fmtValor(l.meta, l.unidadeMedida)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
 // ============================================================
 // TEMA
 // ============================================================
@@ -996,11 +1382,13 @@ function toggleTheme(){
   document.getElementById('themeLabel').textContent = claro ? 'Modo claro' : 'Modo escuro';
   renderAgricola();
   renderIndustria();
+  renderManutencao();
 }
 
 aplicarTemaSalvo();
 renderAgricola();
 renderIndustria();
+renderManutencao();
 </script>
 </body>
 </html>
