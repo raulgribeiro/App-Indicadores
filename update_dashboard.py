@@ -2,32 +2,48 @@
 """
 update_dashboard.py
 ====================
-Lê as planilhas Agrícola.xlsx e Industria.xlsx da pasta do OneDrive,
-regenera os blocos de dados do index.html (dashboard) e publica a
-atualização no GitHub (add + commit + push).
+Lê as planilhas Agrícola.xlsx, Industria.xlsx e Manutenção.xlsx, regenera
+os blocos de dados do index.html (dashboard) e publica a atualização no
+GitHub (add + commit + push).
+
+Funciona em dois modos:
+  - Local (seu PC): lê os três arquivos direto do OneDrive sincronizado
+    (caminhos em PASTA_PLANILHAS).
+  - GitHub Actions (nuvem): baixa os três arquivos via link do SharePoint
+    ("Alguém com o link"), sem precisar de login — usa as variáveis de
+    ambiente AGRICOLA_SHAREPOINT_URL / INDUSTRIA_SHAREPOINT_URL /
+    MANUTENCAO_SHAREPOINT_URL quando elas existem.
 
 Como funciona (visão geral):
-  1. Lê as duas planilhas com openpyxl.
+  1. Lê as três planilhas com openpyxl.
   2. Interpreta a estrutura de cada bloco de indicador dinamicamente
      (não depende de número de linha fixo — se os VALORES mudarem na
      planilha, o script pega os valores novos automaticamente).
-  3. Usa duas tabelas de metadados (AGRICOLA_META / INDUSTRIA_META)
-     para saber o nome bonito, categoria e unidade de cada indicador.
-     Se aparecer um indicador novo que não está nessas tabelas, o
-     script AVISA no terminal em vez de adivinhar errado — é só
-     adicionar uma linha na tabela correspondente.
+  3. Usa tabelas de metadados (AGRICOLA_META / INDUSTRIA_META /
+     MANUTENCAO_META) para saber o nome bonito, categoria e unidade de
+     cada indicador. Se aparecer um indicador novo que não está nessas
+     tabelas, o script AVISA no terminal em vez de adivinhar errado — é
+     só adicionar uma linha na tabela correspondente.
   4. Substitui o conteúdo entre os marcadores
-     // ==DADOS_AGRICOLA_START== ... // ==DADOS_AGRICOLA_END==
-     // ==DADOS_INDUSTRIA_START== ... // ==DADOS_INDUSTRIA_END==
+     // ==DADOS_AGRICOLA_START==   ... // ==DADOS_AGRICOLA_END==
+     // ==DADOS_INDUSTRIA_START==  ... // ==DADOS_INDUSTRIA_END==
+     // ==DADOS_MANUTENCAO_START== ... // ==DADOS_MANUTENCAO_END==
      dentro do index.html do repositório.
   5. Roda git add / commit / push no repositório.
 
-Só rode dando duplo-clique em "update_dashboard.bat" (que chama este
-script), ou manualmente com: python update_dashboard.py
+USO LOCAL (sem mudar nada): dê duplo-clique em "update_dashboard.bat",
+ou rode manualmente com: python update_dashboard.py
+
+USO NO GITHUB ACTIONS: defina os secrets do repositório
+AGRICOLA_SHAREPOINT_URL, INDUSTRIA_SHAREPOINT_URL e
+MANUTENCAO_SHAREPOINT_URL (links "Alguém com o link" do SharePoint) e
+rode "python update_dashboard.py" sem argumento — o script detecta
+sozinho que deve baixar do SharePoint.
 """
 
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -41,17 +57,33 @@ except ImportError:
     print("Instale com:  pip install openpyxl")
     sys.exit(1)
 
+try:
+    import requests
+except ImportError:
+    requests = None  # só é necessário no modo SharePoint (GitHub Actions)
+
 # ============================================================
 # CONFIGURAÇÃO — ajuste aqui se algo mudar
 # ============================================================
 
-# Pasta do OneDrive onde ficam as planilhas de origem
+# Pasta do OneDrive onde ficam as planilhas de origem (uso local, no seu PC)
 PASTA_PLANILHAS = Path(
     r"C:\Users\raulribeiro\OneDrive - CLEALCO AÇÚCAR E ÁLCOOL S.A"
     r"\Projeto Confiar Excelência\Excelência em Processo\Governanças\Pasta Indicadores"
 )
 ARQ_AGRICOLA = PASTA_PLANILHAS / "Agrícola.xlsx"
 ARQ_INDUSTRIA = PASTA_PLANILHAS / "Industria.xlsx"
+ARQ_MANUTENCAO = PASTA_PLANILHAS / "Manutenção.xlsx"
+
+# Links de compartilhamento "Alguém com o link" do SharePoint — usados
+# automaticamente quando essas variáveis de ambiente existem (ex: rodando
+# no GitHub Actions, onde não há OneDrive sincronizado).
+AGRICOLA_SHAREPOINT_URL = os.environ.get("AGRICOLA_SHAREPOINT_URL")
+INDUSTRIA_SHAREPOINT_URL = os.environ.get("INDUSTRIA_SHAREPOINT_URL")
+MANUTENCAO_SHAREPOINT_URL = os.environ.get("MANUTENCAO_SHAREPOINT_URL")
+
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
 # Pasta do repositório git local (onde está o index.html publicado no GitHub Pages).
 # Por padrão, assume que este script está DENTRO da pasta do repositório.
@@ -62,6 +94,50 @@ INDEX_HTML = REPO_DIR / "index.html"
 def mensagem_commit():
     agora = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
     return f"Atualização automática de indicadores — {agora}"
+
+
+def baixar_sharepoint(url, destino):
+    """Baixa um arquivo de um link de compartilhamento 'Alguém com o link'
+    do SharePoint, sem autenticação nenhuma.
+
+    Precisa de 2 requisições com a MESMA sessão (cookies):
+      1a: no link puro -> o SharePoint libera uma sessão anônima (cookie)
+      2a: no mesmo link + '&download=1' -> devolve o arquivo .xlsx puro
+    """
+    if requests is None:
+        raise RuntimeError("Pacote 'requests' não instalado (necessário para baixar do SharePoint).")
+
+    sessao = requests.Session()
+    sessao.headers.update({"User-Agent": USER_AGENT})
+
+    sessao.get(url, timeout=60, allow_redirects=True)
+
+    sep = "&" if "?" in url else "?"
+    resp = sessao.get(f"{url}{sep}download=1", timeout=180, allow_redirects=True)
+    resp.raise_for_status()
+
+    ctype = resp.headers.get("Content-Type", "")
+    if "spreadsheetml" not in ctype and "excel" not in ctype.lower():
+        raise RuntimeError(
+            f"Download de '{destino.name}' nao retornou um Excel valido "
+            f"(Content-Type recebido: '{ctype}'). O link do SharePoint pode "
+            f"ter expirado ou mudado de permissao — gere um novo link "
+            f"'Alguem com o link' e atualize o secret no GitHub."
+        )
+
+    destino.write_bytes(resp.content)
+    print(f"Baixado do SharePoint: {destino.name} ({len(resp.content)} bytes)")
+    return destino
+
+
+def resolver_planilha(nome_arquivo, sharepoint_url, caminho_local):
+    """Decide de onde ler a planilha: SharePoint (se a env var estiver
+    setada) ou caminho local do OneDrive."""
+    if sharepoint_url:
+        return baixar_sharepoint(sharepoint_url, REPO_DIR / f"_tmp_{nome_arquivo}")
+    if not caminho_local.exists():
+        raise FileNotFoundError(f"Não encontrei a planilha: {caminho_local}")
+    return caminho_local
 
 
 # ============================================================
@@ -107,6 +183,15 @@ INDUSTRIA_META = {
 }
 
 PERIODO_LABEL_MAP_INDUSTRIA = {"SF 25/26": "SF 25/26", "SEM": "SEMANA", "MÊS": "MÊS", "CONS": "ACUMULADO"}
+
+# chave = TÍTULO sem sufixo "CLEMENTINA"/"QUEIROZ", em maiúsculo
+MANUTENCAO_META = {
+    "CAMINHÕES": dict(id="manut_caminhoes", categoria="Veículos Rodoviários", nome="Caminhões — Cumprimento de Manutenção Preventiva"),
+    "CARRETAS": dict(id="manut_carretas", categoria="Veículos Rodoviários", nome="Carretas — Cumprimento de Manutenção Preventiva"),
+    "PIT STOP": dict(id="manut_pitstop", categoria="Veículos Rodoviários", nome="Pit Stop — Cumprimento de Manutenção Preventiva"),
+    "AGRÍCOLA": dict(id="manut_frota_agricola", categoria="Equipamentos Agrícolas", nome="Equipamentos Agrícolas — Cumprimento de Manutenção Preventiva"),
+}
+MANUTENCAO_ORDEM = ["manut_caminhoes", "manut_carretas", "manut_pitstop", "manut_frota_agricola"]
 
 
 # ============================================================
@@ -258,8 +343,11 @@ def parse_agricola(caminho):
     return grupos_unicos, avisos
 
 
-def gerar_js_agricola(grupos):
-    linhas = ["const grupos = ["]
+def gerar_js_bloco(grupos, nome_var):
+    """Gera o JS de um array de grupos no formato {id, categoria, nome,
+    unidade, lowerIsBetter, series, periodos:[{periodo, valores, meta}]}.
+    Usado tanto para Agrícola quanto para Manutenção (mesmo formato)."""
+    linhas = [f"const {nome_var} = ["]
     for g in grupos:
         linhas.append(
             f"  {{ id:'{g['id']}', categoria:'{g['categoria']}', nome:'{g['nome']}', "
@@ -273,6 +361,10 @@ def gerar_js_agricola(grupos):
         linhas.append("    ]},")
     linhas.append("];")
     return "\n".join(linhas)
+
+
+def gerar_js_agricola(grupos):
+    return gerar_js_bloco(grupos, "grupos")
 
 
 # ============================================================
@@ -432,6 +524,125 @@ def gerar_js_industria(grupos):
 
 
 # ============================================================
+# PARSER — MANUTENÇÃO.XLSX (aba AUTOMOTIVA)
+# Cada indicador (Caminhões / Carretas / Pit Stop / Agrícola) aparece em
+# dois blocos na planilha (um "... CLEMENTINA", outro "... QUEIROZ"),
+# cada um com sua própria coluna RESULTADO/META. O parser acha todo
+# bloco marcado "RESULTADO", localiza o título acima e a coluna META ao
+# lado, lê os períodos (semanas) e depois junta CLEMENTINA+QUEIROZ do
+# mesmo indicador em um único grupo com series CLE/QRZ.
+# ============================================================
+def norm_manut_titulo(t):
+    t = t.strip().upper()
+    t = re.sub(r"\s*(CLEMENTINA|QUEIROZ)\s*$", "", t).strip()
+    return t
+
+
+def parse_manutencao(caminho):
+    if not caminho.exists():
+        raise FileNotFoundError(f"Não encontrei a planilha: {caminho}")
+
+    wb = openpyxl.load_workbook(caminho, data_only=True)
+    if "AUTOMOTIVA" not in wb.sheetnames:
+        raise ValueError(f"Esperava aba 'AUTOMOTIVA' em {caminho.name}, encontrei: {wb.sheetnames}")
+    ws = wb["AUTOMOTIVA"]
+
+    blocos = []
+    for r in range(1, ws.max_row + 1):
+        for c in range(1, ws.max_column + 1):
+            v = ws.cell(row=r, column=c).value
+            if not (isinstance(v, str) and v.strip().upper() == "RESULTADO"):
+                continue
+            res_col = c
+            label_col = res_col - 1
+            header_row = r
+
+            titulo = None
+            for tr in (header_row - 1, header_row - 2):
+                tv = ws.cell(row=tr, column=label_col).value
+                if tv:
+                    titulo = str(tv).strip()
+                    break
+            if titulo is None:
+                continue
+
+            meta_col = None
+            for mc in range(res_col + 1, res_col + 4):
+                mv = ws.cell(row=header_row, column=mc).value
+                if isinstance(mv, str) and mv.strip().upper() == "META":
+                    meta_col = mc
+                    break
+            if meta_col is None:
+                continue
+
+            periodos = []
+            dr = header_row + 1
+            passos = 0
+            while dr <= ws.max_row and passos < 40:
+                label = ws.cell(row=dr, column=label_col).value
+                if label is None:
+                    break
+                valor = valor_numerico(ws.cell(row=dr, column=res_col).value)
+                meta = valor_numerico(ws.cell(row=dr, column=meta_col).value)
+                periodos.append({"periodo": str(label).strip(), "valor": valor, "meta": meta})
+                dr += 1
+                passos += 1
+
+            if periodos:
+                blocos.append({"titulo": titulo, "periodos": periodos})
+
+    por_titulo = {}
+    for b in blocos:
+        norm = norm_manut_titulo(b["titulo"])
+        titulo_up = b["titulo"].upper()
+        unidade = "CLE" if "CLEMENTINA" in titulo_up else ("QRZ" if "QUEIROZ" in titulo_up else None)
+        if unidade is None:
+            continue
+        por_titulo.setdefault(norm, {})[unidade] = b["periodos"]
+
+    resultado = []
+    avisos = []
+    for norm, series_map in por_titulo.items():
+        meta_info = MANUTENCAO_META.get(norm)
+        if meta_info is None:
+            avisos.append(
+                f"[MANUTENÇÃO] Indicador não mapeado em MANUTENCAO_META: título='{norm}'. "
+                f"Adicione uma entrada em MANUTENCAO_META para ele aparecer corretamente no dashboard."
+            )
+            meta_info = dict(id="manut_auto_" + slugify(norm), categoria="Outros", nome=norm.title())
+
+        cle = series_map.get("CLE", [])
+        qrz = series_map.get("QRZ", [])
+        base = cle if len(cle) >= len(qrz) else qrz
+        periodos_out = []
+        for i, p in enumerate(base):
+            p_cle = cle[i] if i < len(cle) else {"valor": None, "meta": None}
+            p_qrz = qrz[i] if i < len(qrz) else {"valor": None, "meta": None}
+            periodos_out.append({
+                "periodo": p["periodo"],
+                "valores": {"CLE": p_cle["valor"], "QRZ": p_qrz["valor"]},
+                "meta": p_cle.get("meta") if p_cle.get("meta") is not None else p_qrz.get("meta"),
+            })
+
+        resultado.append({
+            "id": meta_info["id"],
+            "categoria": meta_info["categoria"],
+            "nome": meta_info["nome"],
+            "unidade": "%",
+            "lowerIsBetter": False,
+            "series": ["CLE", "QRZ"],
+            "periodos": periodos_out,
+        })
+
+    resultado.sort(key=lambda g: MANUTENCAO_ORDEM.index(g["id"]) if g["id"] in MANUTENCAO_ORDEM else 99)
+    return resultado, avisos
+
+
+def gerar_js_manutencao(grupos):
+    return gerar_js_bloco(grupos, "gruposManutencao")
+
+
+# ============================================================
 # ATUALIZAÇÃO DO index.html
 # ============================================================
 def substituir_bloco(html, inicio_marca, fim_marca, novo_bloco):
@@ -444,7 +655,7 @@ def substituir_bloco(html, inicio_marca, fim_marca, novo_bloco):
     return padrao.sub(lambda m: substituto, html, count=1)
 
 
-def atualizar_index_html(agricola_js, industria_js):
+def atualizar_index_html(agricola_js, industria_js, manutencao_js):
     if not INDEX_HTML.exists():
         raise FileNotFoundError(
             f"Não encontrei {INDEX_HTML}. Este script precisa estar na mesma pasta do index.html do repositório."
@@ -452,6 +663,7 @@ def atualizar_index_html(agricola_js, industria_js):
     html = INDEX_HTML.read_text(encoding="utf-8")
     html = substituir_bloco(html, "// ==DADOS_AGRICOLA_START==", "// ==DADOS_AGRICOLA_END==", agricola_js)
     html = substituir_bloco(html, "// ==DADOS_INDUSTRIA_START==", "// ==DADOS_INDUSTRIA_END==", industria_js)
+    html = substituir_bloco(html, "// ==DADOS_MANUTENCAO_START==", "// ==DADOS_MANUTENCAO_END==", manutencao_js)
     INDEX_HTML.write_text(html, encoding="utf-8")
 
 
@@ -508,15 +720,22 @@ def main():
     print("Atualização do Dashboard de Indicadores")
     print("=" * 60)
 
-    print(f"\nLendo: {ARQ_AGRICOLA}")
-    grupos_agro, avisos_agro = parse_agricola(ARQ_AGRICOLA)
+    caminho_agricola = resolver_planilha("agricola.xlsx", AGRICOLA_SHAREPOINT_URL, ARQ_AGRICOLA)
+    print(f"\nLendo Agrícola: {caminho_agricola}")
+    grupos_agro, avisos_agro = parse_agricola(caminho_agricola)
     print(f"  -> {len(grupos_agro)} indicadores encontrados (Agrícola).")
 
-    print(f"\nLendo: {ARQ_INDUSTRIA}")
-    grupos_ind, avisos_ind = parse_industria(ARQ_INDUSTRIA)
+    caminho_industria = resolver_planilha("industria.xlsx", INDUSTRIA_SHAREPOINT_URL, ARQ_INDUSTRIA)
+    print(f"\nLendo Indústria: {caminho_industria}")
+    grupos_ind, avisos_ind = parse_industria(caminho_industria)
     print(f"  -> {len(grupos_ind)} indicadores encontrados (Indústria).")
 
-    avisos = avisos_agro + avisos_ind
+    caminho_manutencao = resolver_planilha("manutencao.xlsx", MANUTENCAO_SHAREPOINT_URL, ARQ_MANUTENCAO)
+    print(f"\nLendo Manutenção: {caminho_manutencao}")
+    grupos_manut, avisos_manut = parse_manutencao(caminho_manutencao)
+    print(f"  -> {len(grupos_manut)} indicadores encontrados (Manutenção).")
+
+    avisos = avisos_agro + avisos_ind + avisos_manut
     if avisos:
         print("\n--- AVISOS (indicadores fora das tabelas de metadados) ---")
         for a in avisos:
@@ -526,9 +745,10 @@ def main():
     print("\nGerando blocos de dados...")
     agricola_js = gerar_js_agricola(grupos_agro)
     industria_js = gerar_js_industria(grupos_ind)
+    manutencao_js = gerar_js_manutencao(grupos_manut)
 
     print(f"Atualizando {INDEX_HTML} ...")
-    atualizar_index_html(agricola_js, industria_js)
+    atualizar_index_html(agricola_js, industria_js, manutencao_js)
     print("index.html atualizado.")
 
     print("\nPublicando no GitHub...")
