@@ -1286,18 +1286,21 @@ function renderManutencao(){
       const card = document.createElement('div');
       card.className = 'card wide';
       const canvasId = 'chartManut_'+g.id;
-      card.innerHTML = `<h3>${g.nome}</h3><div class="card-sub">Unidade: ${g.unidade} · Semanas: S18–S35 · maior é melhor</div><div class="chart-wrap tall"><canvas id="${canvasId}"></canvas></div>`;
+      const periodosCard = g.periodos.slice(-10);
+      const faixaLabel = periodosCard.length ? `${periodosCard[0].periodo}–${periodosCard[periodosCard.length-1].periodo}` : '';
+      card.innerHTML = `<h3>${g.nome}</h3><div class="card-sub">Unidade: ${g.unidade} · Últimas 10 semanas (${faixaLabel}) · maior é melhor</div><div class="chart-wrap tall"><canvas id="${canvasId}"></canvas></div>`;
       grid.appendChild(card);
     });
 
     gruposCat.forEach(g=>{
       const canvasId = 'chartManut_'+g.id;
-      const labels = g.periodos.map(p=>p.periodo);
+      const periodosG = g.periodos.slice(-10);
+      const labels = periodosG.map(p=>p.periodo);
       const datasets = [];
 
       unidadesToShow.forEach(u=>{
-        const data = g.periodos.map(p=> (p.valores[u]===null || p.valores[u]===undefined) ? null : p.valores[u]);
-        const colors = g.periodos.map(p=> statusColorUnidade(u, p.valores[u], p.meta, g.lowerIsBetter));
+        const data = periodosG.map(p=> (p.valores[u]===null || p.valores[u]===undefined) ? null : p.valores[u]);
+        const colors = periodosG.map(p=> statusColorUnidade(u, p.valores[u], p.meta, g.lowerIsBetter));
         datasets.push({
           type:'bar',
           label: nomeUnidade[u],
@@ -1311,12 +1314,12 @@ function renderManutencao(){
         });
       });
 
-      const metaRef = g.periodos.find(p=> p.meta!==null && p.meta!==undefined);
+      const metaRef = periodosG.find(p=> p.meta!==null && p.meta!==undefined);
       const metaLabel = metaRef ? `Meta (${fmtValor(metaRef.meta, g.unidade)})` : 'Meta';
       datasets.push({
         type:'line',
         label: metaLabel,
-        data: g.periodos.map(p=>p.meta),
+        data: periodosG.map(p=>p.meta),
         borderColor:'#f39c12',
         backgroundColor:'#f39c12',
         borderDash:[6,4],
